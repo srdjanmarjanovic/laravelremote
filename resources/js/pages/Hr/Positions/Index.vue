@@ -126,17 +126,26 @@ const formatDate = (date: string | null) => {
         year: 'numeric',
     });
 };
+
+const breadcrumbs = [
+    {
+        title: 'HR Dashboard',
+        href: route('hr.dashboard'),
+    },
+    {
+        title: 'Positions',
+        href: route('hr.positions.index'),
+    },
+];
 </script>
 
 <template>
     <Head title="Manage Positions" />
 
-    <AppLayout title="Manage Positions">
-        <template #header>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                    Job Positions
-                </h2>
+                <h1 class="text-2xl font-bold">Job Positions</h1>
                 <Link :href="route('hr.positions.create')">
                     <Button>
                         <Plus class="mr-2 h-4 w-4" />
@@ -144,10 +153,6 @@ const formatDate = (date: string | null) => {
                     </Button>
                 </Link>
             </div>
-        </template>
-
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Filters -->
                 <div class="mb-6 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                     <div class="grid gap-4 md:grid-cols-4">
@@ -394,7 +399,6 @@ const formatDate = (date: string | null) => {
                     </div>
                 </div>
             </div>
-        </div>
     </AppLayout>
 </template>
 

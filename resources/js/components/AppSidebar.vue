@@ -13,27 +13,84 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Folder, LayoutGrid, Briefcase, Users, FileText, Settings as SettingsIcon } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+const page = usePage();
+const user = computed(() => page.props.auth?.user);
+
+// Main navigation items based on user role
+const mainNavItems = computed((): NavItem[] => {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    // HR-specific navigation
+    if (user.value?.role === 'hr') {
+        items.push(
+            {
+                title: 'Positions',
+                href: route('hr.positions.index'),
+                icon: Briefcase,
+            },
+            {
+                title: 'Applications',
+                href: route('hr.applications.index'),
+                icon: FileText,
+            }
+        );
+    }
+
+    // Developer-specific navigation
+    if (user.value?.role === 'developer') {
+        items.push(
+            {
+                title: 'My Applications',
+                href: route('applications.index'),
+                icon: FileText,
+            },
+            {
+                title: 'Profile',
+                href: route('developer.profile.edit'),
+                icon: Users,
+            }
+        );
+    }
+
+    // Admin-specific navigation
+    if (user.value?.role === 'admin') {
+        items.push(
+            {
+                title: 'Manage Positions',
+                href: route('admin.positions.index'),
+                icon: Briefcase,
+            },
+            {
+                title: 'Settings',
+                href: route('settings.profile'),
+                icon: SettingsIcon,
+            }
+        );
+    }
+
+    return items;
+});
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
+        title: 'Browse Jobs',
+        href: route('positions.index'),
         icon: Folder,
     },
     {
         title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
+        href: 'https://laravel.com/docs',
         icon: BookOpen,
     },
 ];

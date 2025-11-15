@@ -7,6 +7,14 @@
 
     <title>@yield('title', 'Remote Laravel Jobs')</title>
 
+    <!-- Dark Mode Script - Must run before page renders to prevent flicker -->
+    <script>
+        // This runs immediately, before any content is rendered
+        if (localStorage.getItem('darkMode') === 'true' || (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -27,21 +35,21 @@
                 <div class="flex items-center">
                     <!-- Logo -->
                     <a href="/" class="flex items-center space-x-2">
-                        <svg class="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        <span class="text-xl font-bold text-gray-900 dark:text-white">RemoteLaravel<span class="text-indigo-600 dark:text-indigo-400">Jobs</span></span>
+                        <span class="text-xl font-bold text-foreground">RemoteLaravel<span class="text-primary">Jobs</span></span>
                     </a>
 
                     <!-- Navigation Links -->
                     <div class="hidden md:ml-10 md:flex md:space-x-8">
-                        <a href="/" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors">
+                        <a href="/positions" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             Browse Jobs
                         </a>
-                        <a href="#" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors">
+                        <a href="#" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             Companies
                         </a>
-                        <a href="#" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors">
+                        <a href="#" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             About
                         </a>
                     </div>
@@ -59,14 +67,14 @@
                     </button>
 
                     @auth
-                        <a href="/dashboard" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors">
+                        <a href="/dashboard" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             Dashboard
                         </a>
                     @else
-                        <a href="/login" class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors">
+                        <a href="/login" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             Sign in
                         </a>
-                        <a href="/register" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors">
+                        <a href="/register" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">
                             Post a Job
                         </a>
                     @endauth
@@ -87,33 +95,33 @@
                 <div class="space-y-4">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Company</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Blog</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Careers</a></li>
+                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">About</a></li>
+                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Blog</a></li>
+                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Careers</a></li>
                     </ul>
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">For Job Seekers</h3>
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">For Job Seekers</h3>
                     <ul class="space-y-2">
-                        <li><a href="/" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Browse Jobs</a></li>
-                        <li><a href="/register" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Create Profile</a></li>
+                        <li><a href="/positions" class="text-muted-foreground hover:text-primary transition-colors">Browse Jobs</a></li>
+                        <li><a href="/register" class="text-muted-foreground hover:text-primary transition-colors">Create Profile</a></li>
                     </ul>
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">For Employers</h3>
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">For Employers</h3>
                     <ul class="space-y-2">
-                        <li><a href="/register" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Post a Job</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Pricing</a></li>
+                        <li><a href="/register" class="text-muted-foreground hover:text-primary transition-colors">Post a Job</a></li>
+                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Pricing</a></li>
                     </ul>
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Legal</h3>
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">Legal</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy</a></li>
-                        <li><a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms</a></li>
+                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Privacy</a></li>
+                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Terms</a></li>
                     </ul>
                 </div>
             </div>

@@ -18,10 +18,35 @@ use Inertia\Inertia;
 */
 
 // Homepage - Browse positions
-Route::get('/', [PublicPositionController::class, 'index'])->name('home');
+// Homepage
+Route::get('/', function () {
+    return view('welcome', [
+        'stats' => [
+            'total_positions' => \App\Models\Position::where('status', 'published')->count(),
+            'total_companies' => \App\Models\Company::count(),
+            'total_applications' => \App\Models\Application::count(),
+        ],
+        'featured_positions' => \App\Models\Position::query()
+            ->where('status', 'published')
+            ->where('is_featured', true)
+            ->with(['company', 'technologies'])
+            ->withCount(['applications', 'views'])
+            ->latest('published_at')
+            ->limit(6)
+            ->get(),
+        'popular_technologies' => \App\Models\Technology::query()
+            ->withCount('positions')
+            ->orderByDesc('positions_count')
+            ->limit(12)
+            ->get(),
+    ]);
+})->name('home');
+
+// Browse positions
+Route::get('/positions', [PublicPositionController::class, 'index'])->name('positions.index');
 
 // Position details
-Route::get('/jobs/{slug}', [PublicPositionController::class, 'show'])->name('positions.show');
+Route::get('/positions/{position:slug}', [PublicPositionController::class, 'show'])->name('positions.show');
 
 // Social Authentication
 Route::prefix('auth')->group(function () {

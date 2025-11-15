@@ -116,20 +116,31 @@ const steps = [
     { number: 3, name: 'Compensation', description: 'Salary and location' },
     { number: 4, name: 'Application', description: 'Custom questions and settings' },
 ];
+
+const breadcrumbs = [
+    {
+        title: 'HR Dashboard',
+        href: route('hr.dashboard'),
+    },
+    {
+        title: 'Positions',
+        href: route('hr.positions.index'),
+    },
+    {
+        title: 'Edit',
+        href: route('hr.positions.edit', props.position.id),
+    },
+];
 </script>
 
 <template>
     <Head :title="`Edit ${position.title}`" />
 
-    <AppLayout :title="`Edit ${position.title}`">
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Edit Position
-            </h2>
-        </template>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+            <h1 class="text-2xl font-bold">Edit Position</h1>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-5xl">
                 <!-- Progress Steps -->
                 <nav aria-label="Progress" class="mb-8">
                     <ol role="list" class="flex items-center">

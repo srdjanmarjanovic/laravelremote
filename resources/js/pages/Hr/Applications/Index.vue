@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Eye, FileText } from 'lucide-vue-next';
+import { Eye } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface User {
@@ -112,20 +112,25 @@ const formatDate = (date: string) => {
         minute: '2-digit',
     });
 };
+
+const breadcrumbs = [
+    {
+        title: 'HR Dashboard',
+        href: route('hr.dashboard'),
+    },
+    {
+        title: 'Applications',
+        href: route('hr.applications.index'),
+    },
+];
 </script>
 
 <template>
     <Head title="Applications" />
 
-    <AppLayout title="Applications">
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Job Applications
-            </h2>
-        </template>
-
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+            <h1 class="text-2xl font-bold">Job Applications</h1>
                 <!-- Filters -->
                 <div class="mb-6 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                     <div class="grid gap-4 md:grid-cols-4">
@@ -309,7 +314,6 @@ const formatDate = (date: string) => {
                     </div>
                 </div>
             </div>
-        </div>
     </AppLayout>
 </template>
 

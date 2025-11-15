@@ -93,20 +93,29 @@ const steps = [
     { number: 3, name: 'Compensation', description: 'Salary and location' },
     { number: 4, name: 'Application', description: 'Custom questions and settings' },
 ];
+
+const breadcrumbs = [
+    {
+        title: 'HR Dashboard',
+        href: route('hr.dashboard'),
+    },
+    {
+        title: 'Positions',
+        href: route('hr.positions.index'),
+    },
+    {
+        title: 'Create',
+        href: route('hr.positions.create'),
+    },
+];
 </script>
 
 <template>
     <Head title="Create Position" />
 
-    <AppLayout title="Create Position">
-        <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Create New Position
-            </h2>
-        </template>
-
-        <div class="py-12">
-            <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+            <h1 class="text-2xl font-bold">Create New Position</h1>
                 <!-- Progress Steps -->
                 <nav aria-label="Progress" class="mb-8">
                     <ol role="list" class="flex items-center">
@@ -499,7 +508,6 @@ const steps = [
                     </div>
                 </form>
             </div>
-        </div>
     </AppLayout>
 </template>
 

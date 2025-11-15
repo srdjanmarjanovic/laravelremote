@@ -90,31 +90,39 @@ const formatDate = (date: string) => {
         minute: '2-digit',
     });
 };
+
+const breadcrumbs = [
+    {
+        title: 'HR Dashboard',
+        href: route('hr.dashboard'),
+    },
+    {
+        title: 'Applications',
+        href: route('hr.applications.index'),
+    },
+    {
+        title: 'Details',
+        href: route('hr.applications.show', props.application.id),
+    },
+];
 </script>
 
 <template>
     <Head :title="`Application from ${application.user.name}`" />
 
-    <AppLayout :title="`Application from ${application.user.name}`">
-        <template #header>
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <Link :href="route('hr.applications.index')">
-                        <Button variant="ghost" size="sm">
-                            <ChevronLeft class="mr-2 h-4 w-4" />
-                            Back
-                        </Button>
-                    </Link>
-                    <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                        Application Details
-                    </h2>
-                </div>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+            <div class="flex items-center space-x-4">
+                <Link :href="route('hr.applications.index')">
+                    <Button variant="ghost" size="sm">
+                        <ChevronLeft class="mr-2 h-4 w-4" />
+                        Back
+                    </Button>
+                </Link>
+                <h1 class="text-2xl font-bold">Application Details</h1>
             </div>
-        </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div class="grid gap-6 lg:grid-cols-3">
+            <div class="grid gap-6 lg:grid-cols-3">
                     <!-- Main Content -->
                     <div class="lg:col-span-2 space-y-6">
                         <!-- Applicant Info -->
@@ -321,7 +329,6 @@ const formatDate = (date: string) => {
                     </div>
                 </div>
             </div>
-        </div>
     </AppLayout>
 </template>
 
