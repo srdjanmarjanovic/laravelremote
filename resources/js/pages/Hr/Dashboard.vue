@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import AppShell from '@/components/AppShell.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Head, Link } from '@inertiajs/vue3';
 import { Briefcase, Building, Clock, Eye, FileText, Users } from 'lucide-vue-next';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 interface Position {
     id: number;
@@ -42,12 +42,12 @@ const getStatusBadge = (status: string) => {
 </script>
 
 <template>
-    <AppShell>
+    <AppLayout>
         <Head title="HR Dashboard" />
 
         <div class="space-y-6">
             <div class="flex items-center justify-between">
-                <Heading>HR Dashboard</Heading>
+                <Heading title='HR Dashboard' />
                 <Link href="/hr/positions/create">
                     <Button>
                         <Briefcase class="mr-2 h-4 w-4" />
@@ -212,6 +212,6 @@ const getStatusBadge = (status: string) => {
                 </Link>
             </div>
         </div>
-    </AppShell>
+    </AppLayout>
 </template>
 

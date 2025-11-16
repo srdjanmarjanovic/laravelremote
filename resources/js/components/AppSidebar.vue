@@ -36,7 +36,7 @@ const mainNavItems = computed((): NavItem[] => {
         items.push(
             {
                 title: 'Positions',
-                href: route('hr.positions.index'),
+                href: '/hr/positions',
                 icon: Briefcase,
             },
             {
@@ -52,7 +52,7 @@ const mainNavItems = computed((): NavItem[] => {
         items.push(
             {
                 title: 'My Applications',
-                href: route('applications.index'),
+                href: route('developer.applications.index'),
                 icon: FileText,
             },
             {
@@ -84,13 +84,13 @@ const mainNavItems = computed((): NavItem[] => {
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Browse Jobs',
-        href: route('positions.index'),
+        title: 'Github Repo',
+        href: 'https://github.com/laravel/vue-starter-kit',
         icon: Folder,
     },
     {
         title: 'Documentation',
-        href: 'https://laravel.com/docs',
+        href: 'https://laravel.com/docs/starter-kits#vue',
         icon: BookOpen,
     },
 ];
