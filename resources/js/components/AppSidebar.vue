@@ -12,6 +12,10 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import hr from '@/routes/hr';
+import developer from '@/routes/developer';
+import admin from '@/routes/admin';
+import settings from '@/routes/profile';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid, Briefcase, Users, FileText, Settings as SettingsIcon } from 'lucide-vue-next';
@@ -36,12 +40,12 @@ const mainNavItems = computed((): NavItem[] => {
         items.push(
             {
                 title: 'Positions',
-                href: '/hr/positions',
+                href: hr.positions.index().url,
                 icon: Briefcase,
             },
             {
                 title: 'Applications',
-                href: route('hr.applications.index'),
+                href: hr.applications.index().url,
                 icon: FileText,
             }
         );
@@ -52,12 +56,12 @@ const mainNavItems = computed((): NavItem[] => {
         items.push(
             {
                 title: 'My Applications',
-                href: route('developer.applications.index'),
+                href: developer.applications.index().url,
                 icon: FileText,
             },
             {
                 title: 'Profile',
-                href: route('developer.profile.edit'),
+                href: developer.profile.edit().url,
                 icon: Users,
             }
         );
@@ -68,12 +72,12 @@ const mainNavItems = computed((): NavItem[] => {
         items.push(
             {
                 title: 'Manage Positions',
-                href: route('admin.positions.index'),
+                href: admin.positions.index().url,
                 icon: Briefcase,
             },
             {
                 title: 'Settings',
-                href: route('settings.profile'),
+                href: settings.edit().url,
                 icon: SettingsIcon,
             }
         );
@@ -83,16 +87,16 @@ const mainNavItems = computed((): NavItem[] => {
 });
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
+    // {
+    //     title: 'Github Repo',
+    //     href: 'https://github.com/laravel/vue-starter-kit',
+    //     icon: Folder,
+    // },
+    // {
+    //     title: 'Documentation',
+    //     href: 'https://laravel.com/docs/starter-kits#vue',
+    //     icon: BookOpen,
+    // },
 ];
 </script>
 

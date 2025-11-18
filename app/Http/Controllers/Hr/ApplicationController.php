@@ -54,9 +54,16 @@ class ApplicationController extends Controller
 
         $applications = $query->paginate(20)->withQueryString();
 
+        // Get positions for filter dropdown
+        $positions = \App\Models\Position::query()
+            ->whereIn('company_id', $companyIds)
+            ->orderBy('title')
+            ->get(['id', 'title']);
+
         return Inertia::render('Hr/Applications/Index', [
             'applications' => $applications,
             'filters' => $request->only(['status', 'position_id', 'company_id', 'sort_by', 'sort_order']),
+            'positions' => $positions,
         ]);
     }
 

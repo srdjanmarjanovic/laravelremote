@@ -1,17 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { X } from 'lucide-vue-next';
+import { computed } from 'vue';
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.css';
 
 interface Technology {
     id: number;
@@ -28,135 +18,138 @@ const emit = defineEmits<{
     'update:modelValue': [value: number[]];
 }>();
 
-const open = ref(false);
-const searchQuery = ref('');
+// Convert modelValue (array of IDs) to array of technology objects
+const selectedTechnologies = computed(() => {
+    return props.technologies.filter(tech => props.modelValue.includes(tech.id));
+});
 
-const selectedTechnologies = ref<Technology[]>(
-    props.technologies.filter((tech) => props.modelValue.includes(tech.id))
-);
-
-watch(
-    () => props.modelValue,
-    (newValue) => {
-        selectedTechnologies.value = props.technologies.filter((tech) =>
-            newValue.includes(tech.id)
-        );
-    }
-);
-
-const filteredTechnologies = ref<Technology[]>([]);
-
-watch(
-    () => searchQuery.value,
-    (query) => {
-        if (!query) {
-            filteredTechnologies.value = props.technologies;
-            return;
-        }
-        filteredTechnologies.value = props.technologies.filter((tech) =>
-            tech.name.toLowerCase().includes(query.toLowerCase())
-        );
-    },
-    { immediate: true }
-);
-
-const toggleTechnology = (technology: Technology) => {
-    const currentIds = [...props.modelValue];
-    const index = currentIds.indexOf(technology.id);
-
-    if (index > -1) {
-        currentIds.splice(index, 1);
-    } else {
-        currentIds.push(technology.id);
-    }
-
-    emit('update:modelValue', currentIds);
-    open.value = false;
-};
-
-const removeTechnology = (technologyId: number) => {
-    emit(
-        'update:modelValue',
-        props.modelValue.filter((id) => id !== technologyId)
-    );
-};
-
-const isSelected = (technologyId: number) => {
-    return props.modelValue.includes(technologyId);
+const handleUpdate = (selectedItems: Technology[]) => {
+    const selectedIds = selectedItems.map(tech => tech.id);
+    emit('update:modelValue', selectedIds);
 };
 </script>
 
 <template>
     <div>
-        <div v-if="selectedTechnologies.length > 0" class="mb-3 flex flex-wrap gap-2">
-            <Badge
-                v-for="tech in selectedTechnologies"
-                :key="tech.id"
-                variant="secondary"
-                class="flex items-center gap-1"
-            >
-                {{ tech.name }}
-                <button
-                    type="button"
-                    @click.stop="removeTechnology(tech.id)"
-                    class="ml-1 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600"
-                >
-                    <X class="h-3 w-3" />
-                </button>
-            </Badge>
-        </div>
-
-        <Popover v-model:open="open">
-            <PopoverTrigger as-child>
-                <Button variant="outline" class="w-full justify-start">
-                    {{
-                        selectedTechnologies.length > 0
-                            ? `${selectedTechnologies.length} selected`
-                            : 'Select technologies...'
-                    }}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-[400px] p-0" align="start">
-                <Command>
-                    <CommandInput v-model="searchQuery" placeholder="Search technologies..." />
-                    <CommandList>
-                        <CommandEmpty>No technologies found.</CommandEmpty>
-                        <CommandGroup>
-                            <CommandItem
-                                v-for="technology in filteredTechnologies"
-                                :key="technology.id"
-                                :value="technology.name"
-                                @select="toggleTechnology(technology)"
-                                class="cursor-pointer"
-                            >
-                                <div
-                                    :class="[
-                                        'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                                        isSelected(technology.id)
-                                            ? 'bg-primary text-primary-foreground'
-                                            : 'opacity-50 [&_svg]:invisible',
-                                    ]"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="h-4 w-4"
-                                    >
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                </div>
-                                <span>{{ technology.name }}</span>
-                            </CommandItem>
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
+        <Multiselect
+            :model-value="selectedTechnologies"
+            @update:model-value="handleUpdate"
+            :options="technologies"
+            :multiple="true"
+            :close-on-select="false"
+            :clear-on-select="true"
+            :preserve-search="false"
+            placeholder="Select technologies"
+            label="name"
+            track-by="id"
+            :preselect-first="false"/>
     </div>
 </template>
 
+
+
+<style>
+/* Custom styling to match shadcn/ui select components */
+.multiselect {
+    min-height: 40px;
+}
+
+.multiselect__tags {
+    min-height: 40px;
+    padding: 8px 40px 0 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition: border-color 0.2s;
+}
+
+.multiselect__tags:hover {
+    border-color: var(--border);
+}
+
+.multiselect__tags:focus-within {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+.multiselect__tag {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-radius: var(--radius-sm);
+    padding: 4px 26px 4px 10px;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+}
+
+.multiselect__tag-icon:after {
+    color: var(--primary-foreground);
+}
+
+.multiselect__tag-icon:hover {
+    background: color-mix(in srgb, var(--primary) 80%, transparent);
+}
+
+.multiselect__option--highlight {
+    background: var(--accent);
+    color: var(--accent-foreground);
+}
+
+.multiselect__option--selected {
+    background: var(--accent);
+    color: var(--accent-foreground);
+    font-weight: 500;
+}
+
+.multiselect__option--selected.multiselect__option--highlight {
+    background: var(--accent);
+    color: var(--accent-foreground);
+}
+
+.multiselect__input,
+.multiselect__single {
+    background: transparent;
+    color: var(--foreground);
+    font-size: 0.875rem;
+}
+
+.multiselect__content-wrapper {
+    border: 1px solid var(--border);
+    border-top: none;
+    background: var(--popover);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.multiselect__content {
+    background: var(--popover);
+}
+
+.multiselect__option {
+    color: var(--popover-foreground);
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.multiselect__option:after {
+    display: none;
+}
+
+.multiselect__placeholder {
+    color: var(--muted-foreground);
+    padding-top: 0;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+}
+
+.multiselect__select {
+    height: 40px;
+}
+
+.multiselect__spinner {
+    border-color: var(--border);
+    border-right-color: var(--primary);
+}
+</style>

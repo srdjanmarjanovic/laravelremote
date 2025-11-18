@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: false }" x-init="darkMode = localStorage.getItem('darkMode') === 'true'" :class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ appearance: '{{ $appearance ?? 'system' }}' }" x-init="appearance = (function() { const value = '; ' + document.cookie; const parts = value.split('; appearance='); if (parts.length === 2) return parts.pop().split(';').shift(); return 'system'; })()">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,12 +7,32 @@
 
     <title>@yield('title', 'Remote Laravel Jobs')</title>
 
-    <!-- Dark Mode Script - Must run before page renders to prevent flicker -->
+    <!-- Appearance Script - Must run before page renders to prevent flicker -->
     <script>
-        // This runs immediately, before any content is rendered
-        if (localStorage.getItem('darkMode') === 'true' || (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
+        (function() {
+            // Get appearance from cookie or default to system
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+                return null;
+            }
+
+            const appearance = getCookie('appearance') || '{{ $appearance ?? "system" }}' || 'system';
+
+            if (appearance === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else if (appearance === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else if (appearance === 'system') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        })();
     </script>
 
     <!-- Fonts -->
@@ -56,13 +76,39 @@
                 </div>
 
                 <div class="flex items-center space-x-4">
-                    <!-- Dark Mode Toggle -->
-                    <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
-                        <svg x-show="!darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <!-- Appearance Toggle -->
+                    <button @click="
+                        const current = appearance;
+                        if (current === 'light') {
+                            appearance = 'dark';
+                        } else if (current === 'dark') {
+                            appearance = 'system';
+                        } else {
+                            appearance = 'light';
+                        }
+                        const maxAge = 365 * 24 * 60 * 60;
+                        document.cookie = 'appearance=' + appearance + ';path=/;max-age=' + maxAge + ';SameSite=Lax';
+                        if (appearance === 'dark') {
+                            document.documentElement.classList.add('dark');
+                        } else if (appearance === 'light') {
+                            document.documentElement.classList.remove('dark');
+                        } else {
+                            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                            if (prefersDark) {
+                                document.documentElement.classList.add('dark');
+                            } else {
+                                document.documentElement.classList.remove('dark');
+                            }
+                        }
+                    " class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" :title="appearance === 'light' ? 'Light mode' : appearance === 'dark' ? 'Dark mode' : 'System mode'">
+                        <svg x-show="appearance === 'light'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg x-show="appearance === 'dark'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
-                        <svg x-show="darkMode" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        <svg x-show="appearance === 'system'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </button>
 
@@ -137,6 +183,7 @@
     <style>
         [x-cloak] { display: none !important; }
     </style>
+    @vite(['resources/js/app.ts'])
 </body>
 </html>
 

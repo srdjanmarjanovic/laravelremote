@@ -9,7 +9,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/table/index';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -25,8 +25,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Plus, MoreVertical, Eye, Edit, Trash2, ExternalLink } from 'lucide-vue-next';
+import { Plus, MoreVertical, Eye, Edit, Archive, ExternalLink } from 'lucide-vue-next';
 import { ref } from 'vue';
+import hr from '@/routes/hr';
+import positions from '@/routes/positions';
+import { toast } from 'vue-sonner';
 
 interface Technology {
     id: number;
@@ -75,16 +78,16 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters.search || '');
-const statusFilter = ref(props.filters.status || '');
-const companyFilter = ref(props.filters.company_id?.toString() || '');
+const statusFilter = ref(props.filters.status || 'all');
+const companyFilter = ref(props.filters.company_id?.toString() || 'all');
 
 const applyFilters = () => {
     router.get(
-        route('hr.positions.index'),
+        hr.positions.index().url,
         {
             search: search.value || undefined,
-            status: statusFilter.value || undefined,
-            company_id: companyFilter.value || undefined,
+            status: statusFilter.value === 'all' ? undefined : statusFilter.value || undefined,
+            company_id: companyFilter.value === 'all' ? undefined : companyFilter.value || undefined,
         },
         {
             preserveState: true,
@@ -95,15 +98,18 @@ const applyFilters = () => {
 
 const clearFilters = () => {
     search.value = '';
-    statusFilter.value = '';
-    companyFilter.value = '';
-    router.get(route('hr.positions.index'));
+    statusFilter.value = 'all';
+    companyFilter.value = 'all';
+    router.get(hr.positions.index().url);
 };
 
-const deletePosition = (position: Position) => {
-    if (confirm(`Are you sure you want to delete "${position.title}"?`)) {
-        router.delete(route('hr.positions.destroy', position.id), {
+const archivePosition = (position: Position) => {
+    if (confirm(`Are you sure you want to archive "${position.title}"? Archived positions will no longer be visible to candidates.`)) {
+        router.post(hr.positions.archive(position.id).url, {}, {
             preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Position archived successfully!');
+            },
         });
     }
 };
@@ -130,11 +136,11 @@ const formatDate = (date: string | null) => {
 const breadcrumbs = [
     {
         title: 'HR Dashboard',
-        href: route('hr.dashboard'),
+        href: hr.dashboard().url,
     },
     {
         title: 'Positions',
-        href: route('hr.positions.index'),
+        href: hr.positions.index().url,
     },
 ];
 </script>
@@ -146,7 +152,7 @@ const breadcrumbs = [
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-bold">Job Positions</h1>
-                <Link :href="route('hr.positions.create')">
+                <Link :href="hr.positions.create().url">
                     <Button>
                         <Plus class="mr-2 h-4 w-4" />
                         Create Position
@@ -167,7 +173,7 @@ const breadcrumbs = [
                                 <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Statuses</SelectItem>
+                                <SelectItem value="all">All Statuses</SelectItem>
                                 <SelectItem value="draft">Draft</SelectItem>
                                 <SelectItem value="published">Published</SelectItem>
                                 <SelectItem value="expired">Expired</SelectItem>
@@ -180,7 +186,7 @@ const breadcrumbs = [
                                 <SelectValue placeholder="All Companies" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Companies</SelectItem>
+                                <SelectItem value="all">All Companies</SelectItem>
                                 <SelectItem
                                     v-for="company in companies"
                                     :key="company.id"
@@ -212,14 +218,14 @@ const breadcrumbs = [
                         </TableHeader>
                         <TableBody>
                             <TableRow
-                                v-if="positions.data.length === 0"
+                                v-if="props.positions.data.length === 0"
                                 class="hover:bg-transparent"
                             >
                                 <TableCell colspan="8" class="text-center text-gray-500">
                                     No positions found. Create your first position to get started!
                                 </TableCell>
                             </TableRow>
-                            <TableRow v-for="position in positions.data" :key="position.id">
+                            <TableRow v-for="position in props.positions.data" :key="position.id" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" @click="router.visit(hr.positions.show(position.id).url)">
                                 <TableCell>
                                     <div class="flex flex-col">
                                         <span class="font-medium text-gray-900 dark:text-gray-100">
@@ -284,7 +290,7 @@ const breadcrumbs = [
                                         {{ formatDate(position.published_at) }}
                                     </span>
                                 </TableCell>
-                                <TableCell class="text-right">
+                                <TableCell class="text-right" @click.stop>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
                                             <Button variant="ghost" size="sm">
@@ -292,9 +298,12 @@ const breadcrumbs = [
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem as-child>
+                                            <DropdownMenuItem 
+                                                v-if="position.status === 'published'"
+                                                as-child
+                                            >
                                                 <a
-                                                    :href="route('positions.show', position.slug)"
+                                                    :href="positions.show(position.slug).url"
                                                     target="_blank"
                                                     class="flex cursor-pointer items-center"
                                                 >
@@ -302,9 +311,22 @@ const breadcrumbs = [
                                                     View Public Page
                                                 </a>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                v-if="position.status !== 'published'"
+                                                as-child
+                                            >
+                                                <a
+                                                    :href="hr.positions.preview(position.id).url"
+                                                    target="_blank"
+                                                    class="flex cursor-pointer items-center"
+                                                >
+                                                    <Eye class="mr-2 h-4 w-4" />
+                                                    Preview
+                                                </a>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem as-child>
                                                 <Link
-                                                    :href="route('hr.positions.show', position.id)"
+                                                    :href="hr.positions.show(position.id).url"
                                                     class="flex cursor-pointer items-center"
                                                 >
                                                     <Eye class="mr-2 h-4 w-4" />
@@ -313,7 +335,7 @@ const breadcrumbs = [
                                             </DropdownMenuItem>
                                             <DropdownMenuItem as-child>
                                                 <Link
-                                                    :href="route('hr.positions.edit', position.id)"
+                                                    :href="hr.positions.edit(position.id).url"
                                                     class="flex cursor-pointer items-center"
                                                 >
                                                     <Edit class="mr-2 h-4 w-4" />
@@ -321,11 +343,12 @@ const breadcrumbs = [
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                class="flex cursor-pointer items-center text-red-600 focus:text-red-600"
-                                                @click="deletePosition(position)"
+                                                v-if="position.status !== 'archived'"
+                                                class="flex cursor-pointer items-center text-amber-600 focus:text-amber-600"
+                                                @click="archivePosition(position)"
                                             >
-                                                <Trash2 class="mr-2 h-4 w-4" />
-                                                Delete
+                                                <Archive class="mr-2 h-4 w-4" />
+                                                Archive
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -336,22 +359,22 @@ const breadcrumbs = [
 
                     <!-- Pagination -->
                     <div
-                        v-if="positions.last_page > 1"
+                        v-if="props.positions.last_page > 1"
                         class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6"
                     >
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Button
-                                v-if="positions.current_page > 1"
+                                v-if="props.positions.current_page > 1"
                                 variant="outline"
-                                @click="router.get(positions.links[0].url!)"
+                                @click="router.get(props.positions.links[0].url!)"
                             >
                                 Previous
                             </Button>
                             <Button
-                                v-if="positions.current_page < positions.last_page"
+                                v-if="props.positions.current_page < props.positions.last_page"
                                 variant="outline"
                                 @click="
-                                    router.get(positions.links[positions.links.length - 1].url!)
+                                    router.get(props.positions.links[props.positions.links.length - 1].url!)
                                 "
                             >
                                 Next
@@ -364,26 +387,26 @@ const breadcrumbs = [
                                 <p class="text-sm text-gray-700 dark:text-gray-300">
                                     Showing
                                     <span class="font-medium">
-                                        {{ (positions.current_page - 1) * positions.per_page + 1 }}
+                                        {{ (props.positions.current_page - 1) * props.positions.per_page + 1 }}
                                     </span>
                                     to
                                     <span class="font-medium">
                                         {{
                                             Math.min(
-                                                positions.current_page * positions.per_page,
-                                                positions.total
+                                                props.positions.current_page * props.positions.per_page,
+                                                props.positions.total
                                             )
                                         }}
                                     </span>
                                     of
-                                    <span class="font-medium">{{ positions.total }}</span>
+                                    <span class="font-medium">{{ props.positions.total }}</span>
                                     results
                                 </p>
                             </div>
                             <div>
                                 <nav class="inline-flex -space-x-px rounded-md shadow-sm">
                                             <Button
-                                                v-for="(link, index) in positions.links"
+                                                v-for="(link, index) in props.positions.links"
                                                 :key="index"
                                                 :variant="link.active ? 'default' : 'outline'"
                                                 :disabled="!link.url"

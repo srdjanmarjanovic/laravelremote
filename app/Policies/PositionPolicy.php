@@ -57,20 +57,6 @@ class PositionPolicy
     }
 
     /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Position $position): bool
-    {
-        // Admins can delete all positions
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        // HR users can delete positions from their companies
-        return $user->isHR() && $user->canManagePosition($position);
-    }
-
-    /**
      * Determine whether the user can feature the position.
      */
     public function feature(User $user, Position $position): bool
@@ -90,6 +76,20 @@ class PositionPolicy
         }
 
         // HR users can archive their own positions
+        return $user->isHR() && $user->canManagePosition($position);
+    }
+
+    /**
+     * Determine whether the user can preview the position.
+     */
+    public function preview(User $user, Position $position): bool
+    {
+        // Admins can preview all positions
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // HR users can preview positions from their companies
         return $user->isHR() && $user->canManagePosition($position);
     }
 

@@ -177,7 +177,7 @@
 
                 <div class="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                     @foreach($popular_technologies as $tech)
-                        <a href="{{ route('positions.index', ['technologies' => [$tech->id]]) }}" class="group relative flex flex-col items-center justify-center rounded-lg border-2 border-border p-6 hover:border-primary hover:shadow-lg transition-all duration-200">
+                        <a href="{{ route('positions.index', ['technology' => $tech->slug]) }}" class="group relative flex flex-col items-center justify-center rounded-lg border-2 border-border p-6 hover:border-primary hover:shadow-lg transition-all duration-200">
                             <div class="text-4xl mb-3">
                                 @if($tech->icon)
                                     <img src="{{ $tech->icon }}" alt="{{ $tech->name }}" class="h-12 w-12">

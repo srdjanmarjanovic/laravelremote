@@ -59,8 +59,24 @@ export function initializeTheme() {
         return;
     }
 
-    // Initialize theme from saved preference or default to system...
-    const savedAppearance = getStoredAppearance();
+    // Get appearance from cookie first (for SSR compatibility), then localStorage
+    function getCookie(name: string): string | null {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop()?.split(';').shift() || null;
+        }
+        return null;
+    }
+
+    const cookieAppearance = getCookie('appearance') as Appearance | null;
+    const savedAppearance = cookieAppearance || getStoredAppearance();
+    
+    // Sync localStorage with cookie if cookie exists
+    if (cookieAppearance && cookieAppearance !== getStoredAppearance()) {
+        localStorage.setItem('appearance', cookieAppearance);
+    }
+    
     updateTheme(savedAppearance || 'system');
 
     // Set up system theme change listener...
@@ -71,12 +87,25 @@ const appearance = ref<Appearance>('system');
 
 export function useAppearance() {
     onMounted(() => {
-        const savedAppearance = localStorage.getItem(
-            'appearance',
-        ) as Appearance | null;
+        // Get appearance from cookie first (for SSR compatibility), then localStorage
+        function getCookie(name: string): string | null {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+                return parts.pop()?.split(';').shift() || null;
+            }
+            return null;
+        }
+
+        const cookieAppearance = getCookie('appearance') as Appearance | null;
+        const savedAppearance = cookieAppearance || (localStorage.getItem('appearance') as Appearance | null);
 
         if (savedAppearance) {
             appearance.value = savedAppearance;
+            // Sync localStorage with cookie
+            if (cookieAppearance) {
+                localStorage.setItem('appearance', cookieAppearance);
+            }
         }
     });
 
@@ -86,7 +115,7 @@ export function useAppearance() {
         // Store in localStorage for client-side persistence...
         localStorage.setItem('appearance', value);
 
-        // Store in cookie for SSR...
+        // Store in cookie for SSR and Blade views...
         setCookie('appearance', value);
 
         updateTheme(value);

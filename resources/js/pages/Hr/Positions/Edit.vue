@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea/index';
 import {
     Select,
     SelectContent,
@@ -13,13 +12,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import RichTextEditor from '@/components/RichTextEditor.vue';
 import TechnologySelector from '@/components/TechnologySelector.vue';
 import CustomQuestionBuilder, { type CustomQuestion } from '@/components/CustomQuestionBuilder.vue';
-import { ChevronLeft, ChevronRight, Save } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 interface Technology {
     id: number;
@@ -59,9 +56,6 @@ const props = defineProps<{
     companies: Company[];
 }>();
 
-const currentStep = ref(1);
-const totalSteps = 4;
-
 const form = useForm({
     title: props.position.title,
     short_description: props.position.short_description,
@@ -78,44 +72,22 @@ const form = useForm({
     external_apply_url: props.position.external_apply_url || '',
     allow_platform_applications: props.position.allow_platform_applications,
     expires_at: props.position.expires_at ? props.position.expires_at.split('T')[0] : '',
-    technologies: props.position.technologies.map((t) => t.id),
+    technology_ids: props.position.technologies.map((t) => t.id),
     custom_questions: props.position.custom_questions,
     _method: 'PUT',
 });
-
-const nextStep = () => {
-    if (currentStep.value < totalSteps) {
-        currentStep.value++;
-    }
-};
-
-const prevStep = () => {
-    if (currentStep.value > 1) {
-        currentStep.value--;
-    }
-};
 
 const submit = () => {
     form.post(route('hr.positions.update', props.position.id), {
         preserveScroll: true,
         onSuccess: () => {
-            // Redirect handled by controller
+            toast.success('Position updated successfully!');
+        },
+        onError: () => {
+            toast.error('There was an error updating the position. Please check the form.');
         },
     });
 };
-
-const getStepStatus = (step: number) => {
-    if (step < currentStep.value) return 'completed';
-    if (step === currentStep.value) return 'current';
-    return 'upcoming';
-};
-
-const steps = [
-    { number: 1, name: 'Basic Info', description: 'Title, company, and description' },
-    { number: 2, name: 'Requirements', description: 'Technologies and seniority' },
-    { number: 3, name: 'Compensation', description: 'Salary and location' },
-    { number: 4, name: 'Application', description: 'Custom questions and settings' },
-];
 
 const breadcrumbs = [
     {
@@ -137,210 +109,544 @@ const breadcrumbs = [
     <Head :title="`Edit ${position.title}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
-            <h1 class="text-2xl font-bold">Edit Position</h1>
+        <div class="mx-auto w-full max-w-7xl p-4">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold">Edit Position</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Update the details for this job position
+                </p>
+            </div>
 
-            <div class="mx-auto max-w-5xl">
-                <!-- Progress Steps -->
-                <nav aria-label="Progress" class="mb-8">
-                    <ol role="list" class="flex items-center">
-                        <li
-                            v-for="(step, stepIdx) in steps"
-                            :key="step.name"
-                            :class="[
-                                stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : '',
-                                'relative flex-1',
-                            ]"
-                        >
-                            <template v-if="getStepStatus(step.number) === 'completed'">
-                                <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div class="h-0.5 w-full bg-indigo-600" />
+            <form @submit.prevent="submit">
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+                    <!-- Main Content - 3/4 width -->
+                    <div class="space-y-6 lg:col-span-3">
+                        <!-- Title -->
+                        <Card>
+                            <CardContent class="pt-6">
+                                <div class="space-y-2">
+                                    <Label for="title">Position Title *</Label>
+                                    <Input
+                                        id="title"
+                                        v-model="form.title"
+                                        placeholder="e.g., Senior Laravel Developer"
+                                        :class="{ 'border-red-500': form.errors.title }"
+                                    />
+                                    <p v-if="form.errors.title" class="text-sm text-red-500">
+                                        {{ form.errors.title }}
+                                    </p>
                                 </div>
-                                <a
-                                    href="#"
-                                    class="relative flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-900"
-                                    @click.prevent="currentStep = step.number"
-                                >
-                                    <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    <span class="sr-only">{{ step.name }}</span>
-                                </a>
-                            </template>
-                            <template v-else-if="getStepStatus(step.number) === 'current'">
-                                <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div class="h-0.5 w-full bg-gray-200 dark:bg-gray-700" />
-                                </div>
-                                <a
-                                    href="#"
-                                    class="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-indigo-600 bg-white dark:bg-gray-800"
-                                    aria-current="step"
-                                >
-                                    <span
-                                        class="text-indigo-600 dark:text-indigo-400"
-                                        aria-hidden="true"
-                                    >
-                                        {{ step.number }}
-                                    </span>
-                                    <span class="sr-only">{{ step.name }}</span>
-                                </a>
-                            </template>
-                            <template v-else>
-                                <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div class="h-0.5 w-full bg-gray-200 dark:bg-gray-700" />
-                                </div>
-                                <a
-                                    href="#"
-                                    class="group relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800"
-                                >
-                                    <span
-                                        class="text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200"
-                                        aria-hidden="true"
-                                    >
-                                        {{ step.number }}
-                                    </span>
-                                    <span class="sr-only">{{ step.name }}</span>
-                                </a>
-                            </template>
-                        </li>
-                    </ol>
-                </nav>
+                            </CardContent>
+                        </Card>
 
-                <!-- Form Content (Same structure as Create.vue) -->
-                <form @submit.prevent="submit">
-                    <!-- Step 1: Basic Info -->
-                    <Card v-if="currentStep === 1">
-                        <CardHeader>
-                            <CardTitle>Basic Information</CardTitle>
-                            <CardDescription>
-                                Update the essential details about this position
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="space-y-6">
-                            <div class="space-y-2">
-                                <Label for="title">Position Title *</Label>
-                                <Input
-                                    id="title"
-                                    v-model="form.title"
-                                    placeholder="e.g., Senior Laravel Developer"
-                                    :class="{ 'border-red-500': form.errors.title }"
-                                />
-                                <p v-if="form.errors.title" class="text-sm text-red-500">
-                                    {{ form.errors.title }}
-                                </p>
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="company_id">Company *</Label>
-                                <Select v-model="form.company_id">
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a company" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem
-                                            v-for="company in companies"
-                                            :key="company.id"
-                                            :value="company.id.toString()"
+                        <!-- Short Description -->
+                        <Card>
+                            <CardContent class="pt-6">
+                                <div class="space-y-2">
+                                    <Label for="short_description">Short Description *</Label>
+                                    <Textarea
+                                        id="short_description"
+                                        v-model="form.short_description"
+                                        placeholder="A brief overview that will appear in job listings (max 200 characters)"
+                                        rows="3"
+                                        maxlength="200"
+                                        :class="{ 'border-red-500': form.errors.short_description }"
+                                    />
+                                    <div class="flex justify-between">
+                                        <p
+                                            v-if="form.errors.short_description"
+                                            class="text-sm text-red-500"
                                         >
-                                            {{ company.name }}
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <p v-if="form.errors.company_id" class="text-sm text-red-500">
-                                    {{ form.errors.company_id }}
-                                </p>
-                            </div>
+                                            {{ form.errors.short_description }}
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ form.short_description.length }} / 200
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                            <div class="space-y-2">
-                                <Label for="short_description">Short Description *</Label>
-                                <Textarea
-                                    id="short_description"
-                                    v-model="form.short_description"
-                                    placeholder="A brief overview that will appear in job listings (max 200 characters)"
-                                    rows="3"
-                                    maxlength="200"
-                                    :class="{ 'border-red-500': form.errors.short_description }"
-                                />
-                                <div class="flex justify-between">
+                        <!-- Long Description -->
+                        <Card>
+                            <CardContent class="pt-6">
+                                <div class="space-y-2">
+                                    <Label for="long_description">Full Job Description *</Label>
+                                    <RichTextEditor
+                                        v-model="form.long_description"
+                                        placeholder="Provide a detailed description of the role, responsibilities, requirements, and benefits..."
+                                    />
+                                    <p v-if="form.errors.long_description" class="text-sm text-red-500">
+                                        {{ form.errors.long_description }}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Application Settings Section -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Application Settings</CardTitle>
+                                <CardDescription>
+                                    Configure how candidates will apply for this position
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+                                    <!-- Application Method - 1/4 width -->
+                                    <div class="lg:col-span-1">
+                                        <Label class="text-sm font-medium">Application Method</Label>
+                                        <div class="mt-3 space-y-3">
+                                            <div class="flex items-center space-x-2">
+                                                <input
+                                                    id="platform_application"
+                                                    type="radio"
+                                                    :checked="!form.is_external"
+                                                    @change="form.is_external = false; form.external_apply_url = ''; form.allow_platform_applications = true"
+                                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-gray-800"
+                                                />
+                                                <Label for="platform_application" class="cursor-pointer font-normal">
+                                                    Platform applications
+                                                </Label>
+                                            </div>
+
+                                            <div class="flex items-center space-x-2">
+                                                <input
+                                                    id="external_application"
+                                                    type="radio"
+                                                    :checked="form.is_external"
+                                                    @change="form.is_external = true; form.allow_platform_applications = false"
+                                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-gray-800"
+                                                />
+                                                <Label for="external_application" class="cursor-pointer font-normal">
+                                                    External application
+                                                </Label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Application Content - 3/4 width -->
+                                    <div class="lg:col-span-3">
+                                        <!-- Custom Questions -->
+                                        <div v-if="!form.is_external" class="space-y-4">
+                                            <div>
+                                                <Label class="text-sm font-medium">Custom Application Questions</Label>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                    Add specific questions that candidates must answer when applying for this position.
+                                                </p>
+                                            </div>
+                                            <CustomQuestionBuilder v-model="form.custom_questions" />
+                                        </div>
+
+                                        <!-- External Application URL -->
+                                        <div v-if="form.is_external" class="space-y-4">
+                                            <div>
+                                                <Label class="text-sm font-medium" for="external_apply_url_main">External Application URL*</Label>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                    Provide the URL or email address where candidates should apply.
+                                                </p>
+
+                                                <Input
+                                                    id="external_apply_url_main"
+                                                    v-model="form.external_apply_url"
+                                                    placeholder="https://company.com/apply or apply@company.com"
+                                                />
+                                            </div>
+                                            <div class="space-y-2">
+                                                <p
+                                                    v-if="form.errors.external_apply_url"
+                                                    class="text-sm text-red-500"
+                                                >
+                                                    {{ form.errors.external_apply_url }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <!-- Sidebar - 1/4 width -->
+                    <div class="space-y-6 lg:col-span-1">
+                        <!-- Status Section -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="text-base">Status</CardTitle>
+                            </CardHeader>
+                            <CardContent class="space-y-4">
+                                <div class="space-y-2">
+                                    <Label for="status">Publication Status *</Label>
+                                    <Select v-model="form.status">
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="draft">Draft</SelectItem>
+                                            <SelectItem value="published">Published</SelectItem>
+                                            <SelectItem value="expired">Expired</SelectItem>
+                                            <SelectItem value="archived">Archived</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p v-if="form.errors.status" class="text-sm text-red-500">
+                                        {{ form.errors.status }}
+                                    </p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="expires_at">Expiration Date *</Label>
+                                    <Input
+                                        id="expires_at"
+                                        v-model="form.expires_at"
+                                        type="date"
+                                    />
+                                    <p v-if="form.errors.expires_at" class="text-sm text-red-500">
+                                        {{ form.errors.expires_at }}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Location Section -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="text-base">Location</CardTitle>
+                            </CardHeader>
+                            <CardContent class="space-y-4">
+                                <div class="space-y-2">
+                                    <Label for="remote_type">Remote Type *</Label>
+                                    <Select v-model="form.remote_type">
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="global">Global</SelectItem>
+                                            <SelectItem value="timezone">Timezone</SelectItem>
+                                            <SelectItem value="country">Country</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p v-if="form.errors.remote_type" class="text-sm text-red-500">
+                                        {{ form.errors.remote_type }}
+                                    </p>
+                                </div>
+
+                                <div v-if="form.remote_type !== 'global'" class="space-y-2">
+                                    <Label for="location_restriction">
+                                        {{ form.remote_type === 'timezone' ? 'Timezone Restriction' : 'Country Restriction' }}
+                                    </Label>
+                                    <Select v-if="form.remote_type === 'country'" v-model="form.location_restriction">
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a country or region" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="EU">European Union (EU)</SelectItem>
+                                            <SelectItem value="EMEA">Europe, Middle East & Africa (EMEA)</SelectItem>
+                                            <SelectItem value="Afghanistan">Afghanistan</SelectItem>
+                                            <SelectItem value="Albania">Albania</SelectItem>
+                                            <SelectItem value="Algeria">Algeria</SelectItem>
+                                            <SelectItem value="Andorra">Andorra</SelectItem>
+                                            <SelectItem value="Angola">Angola</SelectItem>
+                                            <SelectItem value="Argentina">Argentina</SelectItem>
+                                            <SelectItem value="Armenia">Armenia</SelectItem>
+                                            <SelectItem value="Australia">Australia</SelectItem>
+                                            <SelectItem value="Austria">Austria</SelectItem>
+                                            <SelectItem value="Azerbaijan">Azerbaijan</SelectItem>
+                                            <SelectItem value="Bahamas">Bahamas</SelectItem>
+                                            <SelectItem value="Bahrain">Bahrain</SelectItem>
+                                            <SelectItem value="Bangladesh">Bangladesh</SelectItem>
+                                            <SelectItem value="Barbados">Barbados</SelectItem>
+                                            <SelectItem value="Belarus">Belarus</SelectItem>
+                                            <SelectItem value="Belgium">Belgium</SelectItem>
+                                            <SelectItem value="Belize">Belize</SelectItem>
+                                            <SelectItem value="Benin">Benin</SelectItem>
+                                            <SelectItem value="Bhutan">Bhutan</SelectItem>
+                                            <SelectItem value="Bolivia">Bolivia</SelectItem>
+                                            <SelectItem value="Bosnia and Herzegovina">Bosnia and Herzegovina</SelectItem>
+                                            <SelectItem value="Botswana">Botswana</SelectItem>
+                                            <SelectItem value="Brazil">Brazil</SelectItem>
+                                            <SelectItem value="Brunei">Brunei</SelectItem>
+                                            <SelectItem value="Bulgaria">Bulgaria</SelectItem>
+                                            <SelectItem value="Burkina Faso">Burkina Faso</SelectItem>
+                                            <SelectItem value="Burundi">Burundi</SelectItem>
+                                            <SelectItem value="Cambodia">Cambodia</SelectItem>
+                                            <SelectItem value="Cameroon">Cameroon</SelectItem>
+                                            <SelectItem value="Canada">Canada</SelectItem>
+                                            <SelectItem value="Cape Verde">Cape Verde</SelectItem>
+                                            <SelectItem value="Central African Republic">Central African Republic</SelectItem>
+                                            <SelectItem value="Chad">Chad</SelectItem>
+                                            <SelectItem value="Chile">Chile</SelectItem>
+                                            <SelectItem value="China">China</SelectItem>
+                                            <SelectItem value="Colombia">Colombia</SelectItem>
+                                            <SelectItem value="Comoros">Comoros</SelectItem>
+                                            <SelectItem value="Congo">Congo</SelectItem>
+                                            <SelectItem value="Costa Rica">Costa Rica</SelectItem>
+                                            <SelectItem value="Croatia">Croatia</SelectItem>
+                                            <SelectItem value="Cuba">Cuba</SelectItem>
+                                            <SelectItem value="Cyprus">Cyprus</SelectItem>
+                                            <SelectItem value="Czech Republic">Czech Republic</SelectItem>
+                                            <SelectItem value="Denmark">Denmark</SelectItem>
+                                            <SelectItem value="Djibouti">Djibouti</SelectItem>
+                                            <SelectItem value="Dominica">Dominica</SelectItem>
+                                            <SelectItem value="Dominican Republic">Dominican Republic</SelectItem>
+                                            <SelectItem value="Ecuador">Ecuador</SelectItem>
+                                            <SelectItem value="Egypt">Egypt</SelectItem>
+                                            <SelectItem value="El Salvador">El Salvador</SelectItem>
+                                            <SelectItem value="Equatorial Guinea">Equatorial Guinea</SelectItem>
+                                            <SelectItem value="Eritrea">Eritrea</SelectItem>
+                                            <SelectItem value="Estonia">Estonia</SelectItem>
+                                            <SelectItem value="Eswatini">Eswatini</SelectItem>
+                                            <SelectItem value="Ethiopia">Ethiopia</SelectItem>
+                                            <SelectItem value="Fiji">Fiji</SelectItem>
+                                            <SelectItem value="Finland">Finland</SelectItem>
+                                            <SelectItem value="France">France</SelectItem>
+                                            <SelectItem value="Gabon">Gabon</SelectItem>
+                                            <SelectItem value="Gambia">Gambia</SelectItem>
+                                            <SelectItem value="Georgia">Georgia</SelectItem>
+                                            <SelectItem value="Germany">Germany</SelectItem>
+                                            <SelectItem value="Ghana">Ghana</SelectItem>
+                                            <SelectItem value="Greece">Greece</SelectItem>
+                                            <SelectItem value="Grenada">Grenada</SelectItem>
+                                            <SelectItem value="Guatemala">Guatemala</SelectItem>
+                                            <SelectItem value="Guinea">Guinea</SelectItem>
+                                            <SelectItem value="Guinea-Bissau">Guinea-Bissau</SelectItem>
+                                            <SelectItem value="Guyana">Guyana</SelectItem>
+                                            <SelectItem value="Haiti">Haiti</SelectItem>
+                                            <SelectItem value="Honduras">Honduras</SelectItem>
+                                            <SelectItem value="Hungary">Hungary</SelectItem>
+                                            <SelectItem value="Iceland">Iceland</SelectItem>
+                                            <SelectItem value="India">India</SelectItem>
+                                            <SelectItem value="Indonesia">Indonesia</SelectItem>
+                                            <SelectItem value="Iran">Iran</SelectItem>
+                                            <SelectItem value="Iraq">Iraq</SelectItem>
+                                            <SelectItem value="Ireland">Ireland</SelectItem>
+                                            <SelectItem value="Israel">Israel</SelectItem>
+                                            <SelectItem value="Italy">Italy</SelectItem>
+                                            <SelectItem value="Jamaica">Jamaica</SelectItem>
+                                            <SelectItem value="Japan">Japan</SelectItem>
+                                            <SelectItem value="Jordan">Jordan</SelectItem>
+                                            <SelectItem value="Kazakhstan">Kazakhstan</SelectItem>
+                                            <SelectItem value="Kenya">Kenya</SelectItem>
+                                            <SelectItem value="Kiribati">Kiribati</SelectItem>
+                                            <SelectItem value="Kosovo">Kosovo*</SelectItem>
+                                            <SelectItem value="Kuwait">Kuwait</SelectItem>
+                                            <SelectItem value="Kyrgyzstan">Kyrgyzstan</SelectItem>
+                                            <SelectItem value="Laos">Laos</SelectItem>
+                                            <SelectItem value="Latvia">Latvia</SelectItem>
+                                            <SelectItem value="Lebanon">Lebanon</SelectItem>
+                                            <SelectItem value="Lesotho">Lesotho</SelectItem>
+                                            <SelectItem value="Liberia">Liberia</SelectItem>
+                                            <SelectItem value="Libya">Libya</SelectItem>
+                                            <SelectItem value="Liechtenstein">Liechtenstein</SelectItem>
+                                            <SelectItem value="Lithuania">Lithuania</SelectItem>
+                                            <SelectItem value="Luxembourg">Luxembourg</SelectItem>
+                                            <SelectItem value="Madagascar">Madagascar</SelectItem>
+                                            <SelectItem value="Malawi">Malawi</SelectItem>
+                                            <SelectItem value="Malaysia">Malaysia</SelectItem>
+                                            <SelectItem value="Maldives">Maldives</SelectItem>
+                                            <SelectItem value="Mali">Mali</SelectItem>
+                                            <SelectItem value="Malta">Malta</SelectItem>
+                                            <SelectItem value="Marshall Islands">Marshall Islands</SelectItem>
+                                            <SelectItem value="Mauritania">Mauritania</SelectItem>
+                                            <SelectItem value="Mauritius">Mauritius</SelectItem>
+                                            <SelectItem value="Mexico">Mexico</SelectItem>
+                                            <SelectItem value="Micronesia">Micronesia</SelectItem>
+                                            <SelectItem value="Moldova">Moldova</SelectItem>
+                                            <SelectItem value="Monaco">Monaco</SelectItem>
+                                            <SelectItem value="Mongolia">Mongolia</SelectItem>
+                                            <SelectItem value="Montenegro">Montenegro</SelectItem>
+                                            <SelectItem value="Morocco">Morocco</SelectItem>
+                                            <SelectItem value="Mozambique">Mozambique</SelectItem>
+                                            <SelectItem value="Myanmar">Myanmar</SelectItem>
+                                            <SelectItem value="Namibia">Namibia</SelectItem>
+                                            <SelectItem value="Nauru">Nauru</SelectItem>
+                                            <SelectItem value="Nepal">Nepal</SelectItem>
+                                            <SelectItem value="Netherlands">Netherlands</SelectItem>
+                                            <SelectItem value="New Zealand">New Zealand</SelectItem>
+                                            <SelectItem value="Nicaragua">Nicaragua</SelectItem>
+                                            <SelectItem value="Niger">Niger</SelectItem>
+                                            <SelectItem value="Nigeria">Nigeria</SelectItem>
+                                            <SelectItem value="North Korea">North Korea</SelectItem>
+                                            <SelectItem value="North Macedonia">North Macedonia</SelectItem>
+                                            <SelectItem value="Norway">Norway</SelectItem>
+                                            <SelectItem value="Oman">Oman</SelectItem>
+                                            <SelectItem value="Pakistan">Pakistan</SelectItem>
+                                            <SelectItem value="Palau">Palau</SelectItem>
+                                            <SelectItem value="Palestine">Palestine</SelectItem>
+                                            <SelectItem value="Panama">Panama</SelectItem>
+                                            <SelectItem value="Papua New Guinea">Papua New Guinea</SelectItem>
+                                            <SelectItem value="Paraguay">Paraguay</SelectItem>
+                                            <SelectItem value="Peru">Peru</SelectItem>
+                                            <SelectItem value="Philippines">Philippines</SelectItem>
+                                            <SelectItem value="Poland">Poland</SelectItem>
+                                            <SelectItem value="Portugal">Portugal</SelectItem>
+                                            <SelectItem value="Qatar">Qatar</SelectItem>
+                                            <SelectItem value="Romania">Romania</SelectItem>
+                                            <SelectItem value="Russia">Russia</SelectItem>
+                                            <SelectItem value="Rwanda">Rwanda</SelectItem>
+                                            <SelectItem value="Saint Kitts and Nevis">Saint Kitts and Nevis</SelectItem>
+                                            <SelectItem value="Saint Lucia">Saint Lucia</SelectItem>
+                                            <SelectItem value="Saint Vincent and the Grenadines">Saint Vincent and the Grenadines</SelectItem>
+                                            <SelectItem value="Samoa">Samoa</SelectItem>
+                                            <SelectItem value="San Marino">San Marino</SelectItem>
+                                            <SelectItem value="Sao Tome and Principe">Sao Tome and Principe</SelectItem>
+                                            <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
+                                            <SelectItem value="Senegal">Senegal</SelectItem>
+                                            <SelectItem value="Serbia">Serbia</SelectItem>
+                                            <SelectItem value="Seychelles">Seychelles</SelectItem>
+                                            <SelectItem value="Sierra Leone">Sierra Leone</SelectItem>
+                                            <SelectItem value="Singapore">Singapore</SelectItem>
+                                            <SelectItem value="Slovakia">Slovakia</SelectItem>
+                                            <SelectItem value="Slovenia">Slovenia</SelectItem>
+                                            <SelectItem value="Solomon Islands">Solomon Islands</SelectItem>
+                                            <SelectItem value="Somalia">Somalia</SelectItem>
+                                            <SelectItem value="South Africa">South Africa</SelectItem>
+                                            <SelectItem value="South Korea">South Korea</SelectItem>
+                                            <SelectItem value="South Sudan">South Sudan</SelectItem>
+                                            <SelectItem value="Spain">Spain</SelectItem>
+                                            <SelectItem value="Sri Lanka">Sri Lanka</SelectItem>
+                                            <SelectItem value="Sudan">Sudan</SelectItem>
+                                            <SelectItem value="Suriname">Suriname</SelectItem>
+                                            <SelectItem value="Sweden">Sweden</SelectItem>
+                                            <SelectItem value="Switzerland">Switzerland</SelectItem>
+                                            <SelectItem value="Syria">Syria</SelectItem>
+                                            <SelectItem value="Taiwan">Taiwan</SelectItem>
+                                            <SelectItem value="Tajikistan">Tajikistan</SelectItem>
+                                            <SelectItem value="Tanzania">Tanzania</SelectItem>
+                                            <SelectItem value="Thailand">Thailand</SelectItem>
+                                            <SelectItem value="Timor-Leste">Timor-Leste</SelectItem>
+                                            <SelectItem value="Togo">Togo</SelectItem>
+                                            <SelectItem value="Tonga">Tonga</SelectItem>
+                                            <SelectItem value="Trinidad and Tobago">Trinidad and Tobago</SelectItem>
+                                            <SelectItem value="Tunisia">Tunisia</SelectItem>
+                                            <SelectItem value="Turkey">Turkey</SelectItem>
+                                            <SelectItem value="Turkmenistan">Turkmenistan</SelectItem>
+                                            <SelectItem value="Tuvalu">Tuvalu</SelectItem>
+                                            <SelectItem value="Uganda">Uganda</SelectItem>
+                                            <SelectItem value="Ukraine">Ukraine</SelectItem>
+                                            <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
+                                            <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                                            <SelectItem value="United States">United States</SelectItem>
+                                            <SelectItem value="Uruguay">Uruguay</SelectItem>
+                                            <SelectItem value="Uzbekistan">Uzbekistan</SelectItem>
+                                            <SelectItem value="Vanuatu">Vanuatu</SelectItem>
+                                            <SelectItem value="Vatican City">Vatican City</SelectItem>
+                                            <SelectItem value="Venezuela">Venezuela</SelectItem>
+                                            <SelectItem value="Vietnam">Vietnam</SelectItem>
+                                            <SelectItem value="Yemen">Yemen</SelectItem>
+                                            <SelectItem value="Zambia">Zambia</SelectItem>
+                                            <SelectItem value="Zimbabwe">Zimbabwe</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Input
+                                        v-else
+                                        id="location_restriction"
+                                        v-model="form.location_restriction"
+                                        placeholder="e.g., UTC-5 to UTC+2"
+                                    />
                                     <p
-                                        v-if="form.errors.short_description"
+                                        v-if="form.errors.location_restriction"
                                         class="text-sm text-red-500"
                                     >
-                                        {{ form.errors.short_description }}
+                                        {{ form.errors.location_restriction }}
                                     </p>
-                                    <p class="text-sm text-gray-500">
-                                        {{ form.short_description.length }} / 200
+
+                                    <!-- Kosovo Disclaimer -->
+                                    <div
+                                        v-if="form.remote_type === 'country' && form.location_restriction === 'Kosovo'"
+                                        class="mt-2 text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        <p>
+                                            * Kosovo's status is
+                                            <a
+                                                href="https://en.wikipedia.org/wiki/Belgrade–Pristina_Dialogue#cite_note-32"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="text-blue-600 hover:underline dark:text-blue-400"
+                                            >
+                                                disputed
+                                            </a>
+                                            . Serbia does not recognize Kosovo as a sovereign state.
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Basic Info Section -->
+                        <Card v-if="companies.length > 1">
+                            <CardHeader>
+                                <CardTitle class="text-base">Basic Info</CardTitle>
+                            </CardHeader>
+                            <CardContent class="space-y-4">
+                                <div class="space-y-2">
+                                    <Label for="company_id">Company *</Label>
+                                    <Select v-model="form.company_id">
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a company" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem
+                                                v-for="company in companies"
+                                                :key="company.id"
+                                                :value="company.id.toString()"
+                                            >
+                                                {{ company.name }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p v-if="form.errors.company_id" class="text-sm text-red-500">
+                                        {{ form.errors.company_id }}
                                     </p>
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            <div class="space-y-2">
-                                <Label for="long_description">Full Job Description *</Label>
-                                <RichTextEditor
-                                    v-model="form.long_description"
-                                    placeholder="Provide a detailed description of the role, responsibilities, requirements, and benefits..."
-                                />
-                                <p v-if="form.errors.long_description" class="text-sm text-red-500">
-                                    {{ form.errors.long_description }}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Step 2: Requirements -->
-                    <Card v-if="currentStep === 2">
-                        <CardHeader>
-                            <CardTitle>Requirements & Skills</CardTitle>
-                            <CardDescription>
-                                Specify the technologies and experience level required
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="space-y-6">
-                            <div class="space-y-2">
-                                <Label>Technologies *</Label>
-                                <TechnologySelector
-                                    v-model="form.technologies"
-                                    :technologies="technologies"
-                                />
-                                <p v-if="form.errors.technologies" class="text-sm text-red-500">
-                                    {{ form.errors.technologies }}
-                                </p>
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="seniority">Seniority Level</Label>
-                                <Select v-model="form.seniority">
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select seniority level" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="">Not specified</SelectItem>
-                                        <SelectItem value="junior">Junior</SelectItem>
-                                        <SelectItem value="mid">Mid-Level</SelectItem>
-                                        <SelectItem value="senior">Senior</SelectItem>
-                                        <SelectItem value="lead">Lead</SelectItem>
-                                        <SelectItem value="principal">Principal</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <p v-if="form.errors.seniority" class="text-sm text-red-500">
-                                    {{ form.errors.seniority }}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Step 3: Compensation -->
-                    <Card v-if="currentStep === 3">
-                        <CardHeader>
-                            <CardTitle>Compensation & Location</CardTitle>
-                            <CardDescription>
-                                Define salary range and remote work details
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="space-y-6">
-                            <div class="grid gap-4 md:grid-cols-2">
+                        <!-- Requirements Section -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="text-base">Requirements</CardTitle>
+                            </CardHeader>
+                            <CardContent class="space-y-4">
                                 <div class="space-y-2">
-                                    <Label for="salary_min">Minimum Salary (USD)</Label>
+                                    <Label>Technologies *</Label>
+                                    <TechnologySelector
+                                        v-model="form.technology_ids"
+                                        :technologies="technologies"
+                                    />
+                                    <p v-if="form.errors.technology_ids" class="text-sm text-red-500">
+                                        {{ form.errors.technology_ids }}
+                                    </p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="seniority">Seniority Level</Label>
+                                    <Select v-model="form.seniority">
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select seniority level" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="junior">Junior</SelectItem>
+                                            <SelectItem value="mid">Mid-Level</SelectItem>
+                                            <SelectItem value="senior">Senior</SelectItem>
+                                            <SelectItem value="lead">Lead</SelectItem>
+                                            <SelectItem value="principal">Principal</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p v-if="form.errors.seniority" class="text-sm text-red-500">
+                                        {{ form.errors.seniority }}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Compensation Section -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="text-base">Compensation</CardTitle>
+                            </CardHeader>
+                            <CardContent class="space-y-4">
+                                <div class="space-y-2">
+                                    <Label for="salary_min">Min Salary (USD)</Label>
                                     <Input
                                         id="salary_min"
                                         v-model.number="form.salary_min"
@@ -353,8 +659,9 @@ const breadcrumbs = [
                                         {{ form.errors.salary_min }}
                                     </p>
                                 </div>
+
                                 <div class="space-y-2">
-                                    <Label for="salary_max">Maximum Salary (USD)</Label>
+                                    <Label for="salary_max">Max Salary (USD)</Label>
                                     <Input
                                         id="salary_max"
                                         v-model.number="form.salary_max"
@@ -367,176 +674,18 @@ const breadcrumbs = [
                                         {{ form.errors.salary_max }}
                                     </p>
                                 </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="remote_type">Remote Type *</Label>
-                                <Select v-model="form.remote_type">
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="global">Global - Work from anywhere</SelectItem>
-                                        <SelectItem value="timezone">Timezone Specific</SelectItem>
-                                        <SelectItem value="country">Country Specific</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <p v-if="form.errors.remote_type" class="text-sm text-red-500">
-                                    {{ form.errors.remote_type }}
-                                </p>
-                            </div>
-
-                            <div v-if="form.remote_type !== 'global'" class="space-y-2">
-                                <Label for="location_restriction">Location Restriction</Label>
-                                <Input
-                                    id="location_restriction"
-                                    v-model="form.location_restriction"
-                                    :placeholder="
-                                        form.remote_type === 'timezone'
-                                            ? 'e.g., UTC-5 to UTC+2'
-                                            : 'e.g., USA, Canada, UK'
-                                    "
-                                />
-                                <p
-                                    v-if="form.errors.location_restriction"
-                                    class="text-sm text-red-500"
-                                >
-                                    {{ form.errors.location_restriction }}
-                                </p>
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="expires_at">Expiration Date</Label>
-                                <Input
-                                    id="expires_at"
-                                    v-model="form.expires_at"
-                                    type="date"
-                                />
-                                <p v-if="form.errors.expires_at" class="text-sm text-red-500">
-                                    {{ form.errors.expires_at }}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Step 4: Application Settings -->
-                    <Card v-if="currentStep === 4">
-                        <CardHeader>
-                            <CardTitle>Application Settings</CardTitle>
-                            <CardDescription>
-                                Configure how candidates will apply for this position
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="space-y-6">
-                            <div class="space-y-4">
-                                <div class="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="is_external"
-                                        v-model:checked="form.is_external"
-                                    />
-                                    <Label for="is_external" class="cursor-pointer font-normal">
-                                        This is an external position (applications handled elsewhere)
-                                    </Label>
-                                </div>
-
-                                <div v-if="form.is_external" class="space-y-2 ml-6">
-                                    <Label for="external_apply_url">External Application URL *</Label>
-                                    <Input
-                                        id="external_apply_url"
-                                        v-model="form.external_apply_url"
-                                        type="url"
-                                        placeholder="https://company.com/careers/apply"
-                                    />
-                                    <p
-                                        v-if="form.errors.external_apply_url"
-                                        class="text-sm text-red-500"
-                                    >
-                                        {{ form.errors.external_apply_url }}
-                                    </p>
-                                </div>
-
-                                <div v-if="!form.is_external" class="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="allow_platform_applications"
-                                        v-model:checked="form.allow_platform_applications"
-                                    />
-                                    <Label
-                                        for="allow_platform_applications"
-                                        class="cursor-pointer font-normal"
-                                    >
-                                        Allow applications through this platform
-                                    </Label>
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            <div class="space-y-2">
-                                <Label>Custom Application Questions</Label>
-                                <p class="text-sm text-gray-500 mb-4">
-                                    Add custom questions that candidates must answer when applying
-                                </p>
-                                <CustomQuestionBuilder v-model="form.custom_questions" />
-                            </div>
-
-                            <Separator />
-
-                            <div class="space-y-2">
-                                <Label for="status">Publication Status *</Label>
-                                <Select v-model="form.status">
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="draft">Draft</SelectItem>
-                                        <SelectItem value="published">Published</SelectItem>
-                                        <SelectItem value="expired">Expired</SelectItem>
-                                        <SelectItem value="archived">Archived</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <p v-if="form.errors.status" class="text-sm text-red-500">
-                                    {{ form.errors.status }}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <!-- Navigation Buttons -->
-                    <div class="mt-6 flex items-center justify-between">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            @click="prevStep"
-                            :disabled="currentStep === 1"
-                        >
-                            <ChevronLeft class="mr-2 h-4 w-4" />
-                            Previous
-                        </Button>
-
-                        <div class="text-sm text-gray-500">
-                            Step {{ currentStep }} of {{ totalSteps }}
-                        </div>
-
-                        <Button
-                            v-if="currentStep < totalSteps"
-                            type="button"
-                            @click="nextStep"
-                        >
-                            Next
-                            <ChevronRight class="ml-2 h-4 w-4" />
-                        </Button>
-
-                        <Button
-                            v-else
-                            type="submit"
-                            :disabled="form.processing"
-                        >
-                            <Save class="mr-2 h-4 w-4" />
-                            {{ form.processing ? 'Saving...' : 'Save Changes' }}
-                        </Button>
+                            </CardContent>
+                        </Card>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-6 flex justify-end">
+                    <Button type="submit" :disabled="form.processing">
+                        {{ form.processing ? 'Saving...' : 'Save Changes' }}
+                    </Button>
+                </div>
+            </form>
         </div>
     </AppLayout>
 </template>

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import Heading from '@/components/Heading.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Head, Link } from '@inertiajs/vue3';
 import { Briefcase, Building, Clock, Eye, FileText, Users } from 'lucide-vue-next';
-import AppLayout from '@/layouts/AppLayout.vue';
+import hr from '@/routes/hr';
 
 interface Position {
     id: number;
@@ -39,16 +39,23 @@ const getStatusBadge = (status: string) => {
     };
     return variants[status] || variants.draft;
 };
+
+const breadcrumbs = [
+    {
+        title: 'HR Dashboard',
+        href: hr.dashboard().url,
+    },
+];
 </script>
 
 <template>
-    <AppLayout>
-        <Head title="HR Dashboard" />
+    <Head title="HR Dashboard" />
 
-        <div class="space-y-6">
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
             <div class="flex items-center justify-between">
-                <Heading title='HR Dashboard' />
-                <Link href="/hr/positions/create">
+                <h1 class="text-2xl font-bold">HR Dashboard</h1>
+                <Link :href="hr.positions.create().url">
                     <Button>
                         <Briefcase class="mr-2 h-4 w-4" />
                         Post New Position
@@ -127,25 +134,23 @@ const getStatusBadge = (status: string) => {
                             <CardTitle>Your Positions</CardTitle>
                             <CardDescription>Manage your job postings</CardDescription>
                         </div>
-                        <Link href="/hr/positions">
+                        <Link :href="hr.positions.index().url">
                             <Button variant="outline" size="sm">View All</Button>
                         </Link>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <div v-if="positions && positions.length > 0" class="space-y-4">
-                        <div
+                        <Link
                             v-for="position in positions"
                             :key="position.id"
-                            class="flex items-center justify-between rounded-lg border p-4"
+                            :href="hr.positions.show(position.id).url"
+                            class="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
                             <div class="space-y-1">
-                                <Link
-                                    :href="`/hr/positions/${position.id}`"
-                                    class="font-medium hover:underline"
-                                >
+                                <p class="font-medium">
                                     {{ position.title }}
-                                </Link>
+                                </p>
                                 <p class="text-sm text-muted-foreground">
                                     {{ position.company.name }}
                                 </p>
@@ -163,16 +168,20 @@ const getStatusBadge = (status: string) => {
                                 <Badge :variant="getStatusBadge(position.status).variant">
                                     {{ getStatusBadge(position.status).text }}
                                 </Badge>
-                                <Link :href="`/hr/positions/${position.id}/edit`">
-                                    <Button variant="ghost" size="sm">Edit</Button>
-                                </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    @click.prevent.stop="$inertia.visit(hr.positions.edit(position.id).url)"
+                                >
+                                    Edit
+                                </Button>
                             </div>
-                        </div>
+                        </Link>
                     </div>
                     <div v-else class="py-8 text-center text-muted-foreground">
                         <Briefcase class="mx-auto mb-2 h-8 w-8" />
                         <p>No positions yet</p>
-                        <Link href="/hr/positions/create" class="mt-2">
+                        <Link :href="hr.positions.create().url" class="mt-2">
                             <Button variant="link">Create Your First Position</Button>
                         </Link>
                     </div>
@@ -181,7 +190,7 @@ const getStatusBadge = (status: string) => {
 
             <!-- Quick Actions -->
             <div class="grid gap-4 md:grid-cols-3">
-                <Link href="/hr/positions/create">
+                <Link :href="hr.positions.create().url" view-transaction>
                     <Card class="cursor-pointer transition-colors hover:bg-accent">
                         <CardHeader>
                             <Briefcase class="mb-2 h-8 w-8" />
@@ -191,7 +200,7 @@ const getStatusBadge = (status: string) => {
                     </Card>
                 </Link>
 
-                <Link href="/hr/applications">
+                <Link :href="hr.applications.index().url">
                     <Card class="cursor-pointer transition-colors hover:bg-accent">
                         <CardHeader>
                             <Users class="mb-2 h-8 w-8" />
@@ -201,7 +210,7 @@ const getStatusBadge = (status: string) => {
                     </Card>
                 </Link>
 
-                <Link href="/hr/positions">
+                <Link :href="hr.positions.index().url">
                     <Card class="cursor-pointer transition-colors hover:bg-accent">
                         <CardHeader>
                             <FileText class="mb-2 h-8 w-8" />

@@ -84,14 +84,8 @@ const updateQuestion = (index: number, field: keyof CustomQuestion, value: any) 
                                 </Label>
                                 <Input
                                     :id="`question-${index}`"
-                                    :value="question.question_text"
-                                    @input="
-                                        updateQuestion(
-                                            index,
-                                            'question_text',
-                                            ($event.target as HTMLInputElement).value
-                                        )
-                                    "
+                                    v-model="questions[index].question_text"
+                                    @update:modelValue="updateQuestions"
                                     placeholder="e.g., Why do you want to work for us?"
                                     class="mt-1"
                                 />
@@ -101,7 +95,7 @@ const updateQuestion = (index: number, field: keyof CustomQuestion, value: any) 
                                     :id="`required-${index}`"
                                     :checked="question.is_required"
                                     @update:checked="
-                                        (checked) => updateQuestion(index, 'is_required', checked)
+                                        (checked: boolean) => updateQuestion(index, 'is_required', checked)
                                     "
                                 />
                                 <Label

@@ -1,17 +1,38 @@
 @extends('layouts.public')
 
-@section('title', $position->title . ' at ' . $position->company->name)
+@section('title', $position->title . ' at ' . $position->company->name . ' (Preview)')
 @section('description', $position->short_description)
 
 @section('content')
 <div class="bg-muted min-h-screen transition-colors duration-300">
+    <!-- Preview Banner -->
+    <div class="bg-yellow-100 border-b-2 border-yellow-400 dark:bg-yellow-900 dark:border-yellow-600">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <div>
+                        <p class="font-semibold text-yellow-800 dark:text-yellow-200">Preview Mode</p>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300">This is how your position will appear to candidates. This preview is only visible to you.</p>
+                    </div>
+                </div>
+                <a href="{{ route('hr.positions.edit', $position) }}" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors text-sm">
+                    Edit Position
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Back Button -->
-        <a href="/" class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors">
+        <a href="{{ route('hr.positions.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to all positions
+            Back to positions
         </a>
 
         <!-- Position Header Card -->
@@ -35,6 +56,11 @@
                                 @if($position->is_featured)
                                     <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-secondary text-secondary-foreground ml-2">
                                         ⭐ Featured
+                                    </span>
+                                @endif
+                                @if($position->status === 'draft')
+                                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 ml-2">
+                                        Draft
                                     </span>
                                 @endif
                             </h1>
@@ -71,67 +97,45 @@
                                     </span>
                                 @endif
 
-                                <span class="text-muted-foreground">
-                                    Posted {{ $position->published_at->diffForHumans() }}
-                                </span>
+                                @if($position->published_at)
+                                    <span class="text-muted-foreground">
+                                        Posted {{ $position->published_at->diffForHumans() }}
+                                    </span>
+                                @else
+                                    <span class="text-muted-foreground">
+                                        Not yet published
+                                    </span>
+                                @endif
                             </div>
                         </div>
 
-                        <!-- Apply Button -->
+                        <!-- Apply Button (Preview) -->
                         <div class="flex-shrink-0">
-                            @auth
-                                @if(auth()->user()->isHR() && auth()->user()->canManagePosition($position))
-                                    {{-- HR users see Edit button --}}
-                                    <a href="{{ route('hr.positions.edit', $position) }}" class="inline-flex items-center px-6 py-3 bg-secondary hover:bg-secondary/90 text-secondary-foreground font-medium rounded-lg transition-colors">
-                                        <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Edit Position
-                                    </a>
-                                @elseif(auth()->user()->isDeveloper() || auth()->user()->isAdmin())
-                                    {{-- Developers and Admins see Apply Now --}}
-                                    @if($position->canReceiveApplications())
-                                        <a href="{{ route('positions.apply', $position) }}" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
-                                            Apply Now
-                                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </a>
-                                    @elseif($position->is_external)
-                                        <a href="{{ $position->external_apply_url }}" target="_blank" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
-                                            Apply on Company Site
-                                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                            </svg>
-                                        </a>
-                                    @else
-                                        <span class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg">
-                                            Applications Closed
-                                        </span>
-                                    @endif
-                                @endif
-                            @else
-                                {{-- Visitors see Apply Now that redirects to login --}}
+                            @if($position->status === 'published')
                                 @if($position->canReceiveApplications())
-                                    <a href="{{ route('login') }}?redirect={{ urlencode(route('positions.apply', $position)) }}" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
-                                        Apply Now
+                                    <button disabled class="inline-flex items-center px-6 py-3 bg-primary/50 text-primary-foreground font-medium rounded-lg cursor-not-allowed">
+                                        Apply Now (Preview)
                                         <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                         </svg>
-                                    </a>
+                                    </button>
                                 @elseif($position->is_external)
-                                    <a href="{{ $position->external_apply_url }}" target="_blank" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
-                                        Apply on Company Site
+                                    <button disabled class="inline-flex items-center px-6 py-3 bg-primary/50 text-primary-foreground font-medium rounded-lg cursor-not-allowed">
+                                        Apply on Company Site (Preview)
                                         <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                         </svg>
-                                    </a>
+                                    </button>
                                 @else
                                     <span class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg">
                                         Applications Closed
                                     </span>
                                 @endif
-                            @endauth
+                            @else
+                                <button disabled class="inline-flex items-center px-6 py-3 bg-gray-300 text-gray-600 font-medium rounded-lg cursor-not-allowed dark:bg-gray-700 dark:text-gray-400">
+                                    Not Published
+                                </button>
+                            @endif
                         </div>
                     </div>
 
@@ -164,7 +168,7 @@
                 @if($position->customQuestions->isNotEmpty())
                     <div class="bg-card rounded-lg shadow p-8 border border-border transition-colors duration-300">
                         <h2 class="text-2xl font-bold text-foreground mb-4">Application Questions</h2>
-                        <p class="text-muted-foreground mb-4">You'll be asked to answer these questions when applying:</p>
+                        <p class="text-muted-foreground mb-4">Candidates will be asked to answer these questions when applying:</p>
                         <ol class="space-y-2 list-decimal list-inside text-muted-foreground">
                             @foreach($position->customQuestions as $question)
                                 <li>
@@ -220,10 +224,11 @@
                 <div class="bg-card rounded-lg shadow p-6 border border-border transition-colors duration-300">
                     <h3 class="text-lg font-bold text-foreground mb-4">Share this position</h3>
                     <div class="flex gap-2">
-                        <button onclick="navigator.clipboard.writeText(window.location.href)" class="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm transition-colors">
-                            Copy Link
+                        <button disabled class="flex-1 px-4 py-2 bg-muted/50 text-muted-foreground rounded-lg text-sm cursor-not-allowed">
+                            Copy Link (Preview)
                         </button>
                     </div>
+                    <p class="text-xs text-muted-foreground mt-2">Sharing will be available once the position is published.</p>
                 </div>
             </div>
         </div>

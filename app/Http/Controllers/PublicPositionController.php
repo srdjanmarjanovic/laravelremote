@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Position;
 use App\Models\PositionView;
 use App\Models\Technology;
+use App\Services\DeviceDetector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
@@ -118,12 +119,50 @@ class PublicPositionController extends Controller
             return;
         }
 
+        // Get detailed device information from user agent
+        $deviceInfo = DeviceDetector::getDeviceInfo($request->userAgent());
+
+        // Try to get country from various sources
+        $countryCode = $this->detectCountry($request);
+
         PositionView::create([
             'position_id' => $position->id,
             'ip_address_hash' => $ipHash,
+            'country_code' => $countryCode,
             'user_agent' => $request->userAgent(),
+            'device_type' => $deviceInfo['device_type'],
+            'device_name' => $deviceInfo['device_name'],
+            'browser' => $deviceInfo['browser'],
+            'os' => $deviceInfo['os'],
             'referrer' => $request->header('referer'),
             'viewed_at' => now(),
         ]);
+    }
+
+    /**
+     * Detect country from request headers.
+     */
+    protected function detectCountry(Request $request): ?string
+    {
+        // CloudFlare provides country code in header
+        if ($request->header('CF-IPCountry')) {
+            return $request->header('CF-IPCountry');
+        }
+
+        // Cloudflare also provides this
+        if ($request->header('HTTP_CF_IPCOUNTRY')) {
+            return $request->header('HTTP_CF_IPCOUNTRY');
+        }
+
+        // Accept-Language header can give a hint
+        $acceptLanguage = $request->header('Accept-Language');
+        if ($acceptLanguage) {
+            // Extract first locale (e.g., "en-US" -> "US")
+            if (preg_match('/[a-z]{2}-([A-Z]{2})/', $acceptLanguage, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
     }
 }

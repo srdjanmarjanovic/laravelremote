@@ -4,12 +4,13 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PositionController as AdminPositionController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\Developer\DashboardController as DeveloperDashboardController;
 use App\Http\Controllers\Developer\ProfileController as DeveloperProfileController;
 use App\Http\Controllers\Hr\ApplicationController as HrApplicationController;
+use App\Http\Controllers\Hr\DashboardController as HrDashboardController;
 use App\Http\Controllers\Hr\PositionController as HrPositionController;
 use App\Http\Controllers\PublicPositionController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -84,9 +85,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 */
 
 Route::middleware(['auth', 'verified', 'role:developer'])->prefix('developer')->name('developer.')->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('Developer/Dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DeveloperDashboardController::class, '__invoke'])->name('dashboard');
 
     // Profile management
     Route::get('profile', [DeveloperProfileController::class, 'edit'])->name('profile.edit');
@@ -113,12 +112,12 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
 */
 
 Route::middleware(['auth', 'verified', 'role:hr'])->prefix('hr')->name('hr.')->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('Hr/Dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', HrDashboardController::class)->name('dashboard');
 
     // Position management
-    Route::resource('positions', HrPositionController::class);
+    Route::resource('positions', HrPositionController::class)->except(['destroy']);
+    Route::get('positions/{position}/preview', [HrPositionController::class, 'preview'])->name('positions.preview');
+    Route::post('positions/{position}/archive', [HrPositionController::class, 'archive'])->name('positions.archive');
 
     // Application management
     Route::get('applications', [HrApplicationController::class, 'index'])->name('applications.index');

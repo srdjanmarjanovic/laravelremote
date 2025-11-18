@@ -9,7 +9,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/table/index';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { Eye } from 'lucide-vue-next';
 import { ref } from 'vue';
+import hr from '@/routes/hr';
+import positions from '@/routes/positions';
 
 interface User {
     id: number;
@@ -68,16 +70,16 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters.search || '');
-const statusFilter = ref(props.filters.status || '');
-const positionFilter = ref(props.filters.position_id?.toString() || '');
+const statusFilter = ref(props.filters.status || 'all');
+const positionFilter = ref(props.filters.position_id?.toString() || 'all');
 
 const applyFilters = () => {
     router.get(
-        route('hr.applications.index'),
+        hr.applications.index().url,
         {
             search: search.value || undefined,
-            status: statusFilter.value || undefined,
-            position_id: positionFilter.value || undefined,
+            status: statusFilter.value === 'all' ? undefined : statusFilter.value || undefined,
+            position_id: positionFilter.value === 'all' ? undefined : positionFilter.value || undefined,
         },
         {
             preserveState: true,
@@ -88,9 +90,9 @@ const applyFilters = () => {
 
 const clearFilters = () => {
     search.value = '';
-    statusFilter.value = '';
-    positionFilter.value = '';
-    router.get(route('hr.applications.index'));
+    statusFilter.value = 'all';
+    positionFilter.value = 'all';
+    router.get(hr.applications.index().url);
 };
 
 const getStatusColor = (status: string) => {
@@ -116,11 +118,11 @@ const formatDate = (date: string) => {
 const breadcrumbs = [
     {
         title: 'HR Dashboard',
-        href: route('hr.dashboard'),
+        href: hr.dashboard().url,
     },
     {
         title: 'Applications',
-        href: route('hr.applications.index'),
+        href: hr.applications.index().url,
     },
 ];
 </script>
@@ -145,7 +147,7 @@ const breadcrumbs = [
                                 <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Statuses</SelectItem>
+                                <SelectItem value="all">All Statuses</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="reviewing">Reviewing</SelectItem>
                                 <SelectItem value="accepted">Accepted</SelectItem>
@@ -158,9 +160,9 @@ const breadcrumbs = [
                                 <SelectValue placeholder="All Positions" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Positions</SelectItem>
+                                <SelectItem value="all">All Positions</SelectItem>
                                 <SelectItem
-                                    v-for="position in positions"
+                                    v-for="position in props.positions"
                                     :key="position.id"
                                     :value="position.id.toString()"
                                 >
@@ -188,7 +190,7 @@ const breadcrumbs = [
                         </TableHeader>
                         <TableBody>
                             <TableRow
-                                v-if="applications.data.length === 0"
+                                v-if="props.applications.data.length === 0"
                                 class="hover:bg-transparent"
                             >
                                 <TableCell colspan="6" class="text-center text-gray-500">
@@ -196,7 +198,7 @@ const breadcrumbs = [
                                 </TableCell>
                             </TableRow>
                             <TableRow
-                                v-for="application in applications.data"
+                                v-for="application in props.applications.data"
                                 :key="application.id"
                             >
                                 <TableCell>
@@ -211,7 +213,7 @@ const breadcrumbs = [
                                 </TableCell>
                                 <TableCell>
                                     <Link
-                                        :href="route('positions.show', application.position.slug)"
+                                        :href="positions.show(application.position.slug).url"
                                         target="_blank"
                                         class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400"
                                     >
@@ -234,7 +236,7 @@ const breadcrumbs = [
                                     </span>
                                 </TableCell>
                                 <TableCell class="text-right">
-                                    <Link :href="route('hr.applications.show', application.id)">
+                                    <Link :href="hr.applications.show(application.id).url">
                                         <Button variant="ghost" size="sm">
                                             <Eye class="mr-2 h-4 w-4" />
                                             View
@@ -247,22 +249,22 @@ const breadcrumbs = [
 
                     <!-- Pagination -->
                     <div
-                        v-if="applications.last_page > 1"
+                        v-if="props.applications.last_page > 1"
                         class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6"
                     >
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Button
-                                v-if="applications.current_page > 1"
+                                v-if="props.applications.current_page > 1"
                                 variant="outline"
-                                @click="router.get(applications.links[0].url!)"
+                                @click="router.get(props.applications.links[0].url!)"
                             >
                                 Previous
                             </Button>
                             <Button
-                                v-if="applications.current_page < applications.last_page"
+                                v-if="props.applications.current_page < props.applications.last_page"
                                 variant="outline"
                                 @click="
-                                    router.get(applications.links[applications.links.length - 1].url!)
+                                    router.get(props.applications.links[props.applications.links.length - 1].url!)
                                 "
                             >
                                 Next
@@ -276,8 +278,8 @@ const breadcrumbs = [
                                     Showing
                                     <span class="font-medium">
                                         {{
-                                            (applications.current_page - 1) *
-                                                applications.per_page +
+                                            (props.applications.current_page - 1) *
+                                            props.applications.per_page +
                                             1
                                         }}
                                     </span>
@@ -285,20 +287,20 @@ const breadcrumbs = [
                                     <span class="font-medium">
                                         {{
                                             Math.min(
-                                                applications.current_page * applications.per_page,
-                                                applications.total
+                                                props.applications.current_page * props.applications.per_page,
+                                                props.applications.total
                                             )
                                         }}
                                     </span>
                                     of
-                                    <span class="font-medium">{{ applications.total }}</span>
+                                    <span class="font-medium">{{ props.applications.total }}</span>
                                     results
                                 </p>
                             </div>
                             <div>
                                 <nav class="inline-flex -space-x-px rounded-md shadow-sm">
                                     <Button
-                                        v-for="(link, index) in applications.links"
+                                        v-for="(link, index) in props.applications.links"
                                         :key="index"
                                         :variant="link.active ? 'default' : 'outline'"
                                         :disabled="!link.url"

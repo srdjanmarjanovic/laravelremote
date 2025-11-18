@@ -12,12 +12,33 @@ class StoreApplicationRequest extends FormRequest
     public function authorize(): bool
     {
         $position = $this->route('position');
+        $user = $this->user();
 
-        return $this->user()
-            && $this->user()->isDeveloper()
-            && $this->user()->hasCompleteProfile()
-            && $position->canReceiveApplications()
-            && ! $position->applications()->where('user_id', $this->user()->id)->exists();
+        if (! $user) {
+            return false;
+        }
+
+        // Only developers and admins can apply
+        if (! $user->isDeveloper() && ! $user->isAdmin()) {
+            return false;
+        }
+
+        // Developers must have complete profile, admins don't need to
+        if ($user->isDeveloper() && ! $user->hasCompleteProfile()) {
+            return false;
+        }
+
+        // Check if position accepts applications
+        if (! $position->canReceiveApplications()) {
+            return false;
+        }
+
+        // Check if user already applied
+        if ($position->applications()->where('user_id', $user->id)->exists()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -16,6 +16,10 @@ class PositionView extends Model
         'country_code',
         'city',
         'user_agent',
+        'device_type',
+        'device_name',
+        'browser',
+        'os',
         'referrer',
         'viewed_at',
     ];

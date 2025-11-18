@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/vue3';
+import { Toaster } from 'vue-sonner';
 
 interface Props {
     variant?: 'header' | 'sidebar';
@@ -14,8 +15,28 @@ const isOpen = usePage().props.sidebarOpen;
 <template>
     <div v-if="variant === 'header'" class="flex min-h-screen w-full flex-col">
         <slot />
+        <Toaster 
+            position="top-right" 
+            :duration="4000" 
+            :toast-options="{
+                style: { 
+                    maxWidth: '400px',
+                },
+            }"
+            rich-colors 
+        />
     </div>
     <SidebarProvider v-else :default-open="isOpen">
         <slot />
+        <Toaster 
+            position="top-right" 
+            :duration="4000" 
+            :toast-options="{
+                style: { 
+                    maxWidth: '400px',
+                },
+            }"
+            rich-colors 
+        />
     </SidebarProvider>
 </template>

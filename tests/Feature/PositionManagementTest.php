@@ -131,17 +131,21 @@ describe('Position Management', function () {
         $response->assertForbidden();
     });
 
-    it('allows HR users to delete their positions', function () {
+    it('allows HR users to archive their positions', function () {
         actingAs($this->hrUser);
         $position = Position::factory()->create([
             'company_id' => $this->company->id,
             'created_by_user_id' => $this->hrUser->id,
+            'status' => 'published',
         ]);
 
-        $response = post(route('hr.positions.destroy', $position), ['_method' => 'DELETE']);
+        $response = post(route('hr.positions.archive', $position));
 
         $response->assertRedirect();
-        expect(Position::find($position->id))->toBeNull();
+        assertDatabaseHas('positions', [
+            'id' => $position->id,
+            'status' => 'archived',
+        ]);
     });
 
     it('allows admins to feature positions', function () {
@@ -172,7 +176,7 @@ describe('Position Applications', function () {
     it('allows developers with complete profiles to apply', function () {
         actingAs($this->developer);
 
-        $response = post(route('applications.store', $this->position), [
+        $response = post(route('positions.apply.store', $this->position), [
             'cover_letter' => 'I am very interested in this position.',
             'custom_answers' => [],
         ]);
@@ -192,11 +196,11 @@ describe('Position Applications', function () {
             'user_id' => $this->developer->id,
         ]);
 
-        $response = post(route('applications.store', $this->position), [
+        $response = post(route('positions.apply.store', $this->position), [
             'cover_letter' => 'Another application',
         ]);
 
-        $response->assertSessionHasErrors();
+        $response->assertForbidden();
     });
 
     it('prevents developers without complete profiles from applying', function () {
@@ -204,7 +208,7 @@ describe('Position Applications', function () {
         $incompleteUser->developerProfile()->create(['summary' => null, 'cv_path' => null]);
         actingAs($incompleteUser);
 
-        $response = get(route('positions.apply', $this->position->slug));
+        $response = get(route('positions.apply', $this->position));
 
         $response->assertRedirect(route('developer.profile.edit'));
     });
@@ -299,4 +303,3 @@ describe('Public Position Browsing', function () {
         ]);
     });
 });
-

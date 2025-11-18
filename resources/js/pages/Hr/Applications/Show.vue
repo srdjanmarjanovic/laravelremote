@@ -13,6 +13,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { FileText, Mail, Calendar, ChevronLeft, Save, Download } from 'lucide-vue-next';
+import hr from '@/routes/hr';
+import positions from '@/routes/positions';
+import developer from '@/routes/developer';
 
 interface User {
     id: number;
@@ -66,7 +69,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route('hr.applications.update', props.application.id), {
+    form.post(hr.applications.update(props.application.id).url, {
         preserveScroll: true,
     });
 };
@@ -94,15 +97,15 @@ const formatDate = (date: string) => {
 const breadcrumbs = [
     {
         title: 'HR Dashboard',
-        href: route('hr.dashboard'),
+        href: hr.dashboard().url,
     },
     {
         title: 'Applications',
-        href: route('hr.applications.index'),
+        href: hr.applications.index().url,
     },
     {
         title: 'Details',
-        href: route('hr.applications.show', props.application.id),
+        href: hr.applications.show(props.application.id).url,
     },
 ];
 </script>
@@ -113,7 +116,7 @@ const breadcrumbs = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
             <div class="flex items-center space-x-4">
-                <Link :href="route('hr.applications.index')">
+                <Link :href="hr.applications.index().url">
                     <Button variant="ghost" size="sm">
                         <ChevronLeft class="mr-2 h-4 w-4" />
                         Back
@@ -188,7 +191,7 @@ const breadcrumbs = [
                                 <!-- CV Download -->
                                 <div v-if="application.user.developer_profile?.cv_path">
                                     <a
-                                        :href="route('developer.profile.cv.download', application.user.id)"
+                                        :href="developer.profile.cv.download(application.user.id).url"
                                         target="_blank"
                                     >
                                         <Button variant="outline" class="w-full">
@@ -316,7 +319,7 @@ const breadcrumbs = [
                                 </div>
 
                                 <Link
-                                    :href="route('positions.show', application.position.slug)"
+                                    :href="positions.show(application.position.slug).url"
                                     target="_blank"
                                 >
                                     <Button variant="outline" class="w-full">

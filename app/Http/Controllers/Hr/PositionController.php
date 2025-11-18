@@ -10,6 +10,7 @@ use App\Models\Position;
 use App\Models\Technology;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,20 +23,60 @@ class PositionController extends Controller
     {
         $user = auth()->user();
 
+        dump(request('show_archived'));
         // Get companies the user has access to
         $companyIds = $user->isAdmin()
             ? Company::pluck('id')
             : $user->companies->pluck('id');
 
-        $positions = Position::query()
+        $query = Position::query()
             ->whereIn('company_id', $companyIds)
             ->with(['company', 'technologies', 'creator'])
-            ->withCount('applications')
-            ->latest()
-            ->paginate(15);
+            ->withCount(['applications', 'views']);
+
+        // Apply search filter
+        if (request('search')) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%'.request('search').'%')
+                    ->orWhere('short_description', 'like', '%'.request('search').'%');
+            });
+        }
+
+        // Apply status filter
+        if (request('status') && request('status') !== 'archived') {
+            $query->where('status', request('status'));
+        }
+
+        // Handle archived positions
+        if (request('status') === 'archived') {
+            // If archived status is selected, show only archived
+            $query->where('status', 'archived');
+        } elseif (! request('show_archived')) {
+            // Otherwise, exclude archived unless explicitly requested
+            $query->where('status', '!=', 'archived');
+        }
+
+        // Apply company filter
+        if (request('company_id')) {
+            $query->where('company_id', request('company_id'));
+        }
+
+        $positions = $query->latest()->paginate(15)->withQueryString();
+
+        // Get all companies for filter dropdown
+        $companies = $user->isAdmin()
+            ? Company::orderBy('name')->get(['companies.id', 'companies.name'])
+            : $user->companies()->orderBy('companies.name')->select('companies.id', 'companies.name')->get();
 
         return Inertia::render('Hr/Positions/Index', [
             'positions' => $positions,
+            'filters' => [
+                'search' => request('search'),
+                'status' => request('status'),
+                'company_id' => request('company_id') ? (int) request('company_id') : null,
+                'show_archived' => request('show_archived') ? true : false,
+            ],
+            'companies' => $companies,
         ]);
     }
 
@@ -55,7 +96,7 @@ class PositionController extends Controller
 
         return Inertia::render('Hr/Positions/Create', [
             'companies' => $companies,
-            'technologies' => $technologies,
+            'technologies' => $technologies->toArray(),
         ]);
     }
 
@@ -125,7 +166,7 @@ class PositionController extends Controller
             'creator',
             'customQuestions',
             'applications' => function ($query) {
-                $query->with('user')->latest();
+                $query->with(['user.developerProfile'])->latest('applied_at');
             },
         ]);
 
@@ -134,8 +175,64 @@ class PositionController extends Controller
             'views',
         ]);
 
+        // Get application counts by status
+        $applicationStats = [
+            'total' => $position->applications_count,
+            'pending' => $position->applications()->where('status', 'pending')->count(),
+            'reviewing' => $position->applications()->where('status', 'reviewing')->count(),
+            'accepted' => $position->applications()->where('status', 'accepted')->count(),
+            'rejected' => $position->applications()->where('status', 'rejected')->count(),
+        ];
+
+        // Get analytics data
+        $analytics = [
+            'total_views' => $position->views_count,
+            'countries' => \App\Models\PositionView::where('position_id', $position->id)
+                ->whereNotNull('country_code')
+                ->selectRaw('country_code, COUNT(*) as count')
+                ->groupBy('country_code')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get()
+                ->map(fn ($item) => [
+                    'country' => $item->country_code,
+                    'count' => $item->count,
+                ])
+                ->values()
+                ->toArray(),
+            'devices' => \App\Models\PositionView::where('position_id', $position->id)
+                ->whereNotNull('device_name')
+                ->selectRaw('device_name, device_type, browser, os, COUNT(*) as count')
+                ->groupBy('device_name', 'device_type', 'browser', 'os')
+                ->orderByDesc('count')
+                ->get()
+                ->map(fn ($item) => [
+                    'device' => $item->device_name,
+                    'device_type' => $item->device_type,
+                    'browser' => $item->browser,
+                    'os' => $item->os,
+                    'count' => $item->count,
+                ])
+                ->values()
+                ->toArray(),
+            'views_by_date' => \App\Models\PositionView::where('position_id', $position->id)
+                ->selectRaw('DATE(viewed_at) as date, COUNT(*) as count')
+                ->where('viewed_at', '>=', now()->subDays(30))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get()
+                ->map(fn ($item) => [
+                    'date' => $item->date,
+                    'count' => $item->count,
+                ])
+                ->values()
+                ->toArray(),
+        ];
+
         return Inertia::render('Hr/Positions/Show', [
             'position' => $position,
+            'applicationStats' => $applicationStats,
+            'analytics' => $analytics,
         ]);
     }
 
@@ -247,15 +344,31 @@ class PositionController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Preview the position as it would appear to candidates.
      */
-    public function destroy(Position $position): RedirectResponse
+    public function preview(Position $position): View
     {
-        $this->authorize('delete', $position);
+        $this->authorize('preview', $position);
 
-        $position->delete();
+        $position->load(['company', 'technologies', 'customQuestions']);
+        $position->loadCount('applications');
+
+        return view('positions.preview', [
+            'position' => $position,
+            'isPreview' => true,
+        ]);
+    }
+
+    /**
+     * Archive the specified resource.
+     */
+    public function archive(Position $position): RedirectResponse
+    {
+        $this->authorize('archive', $position);
+
+        $position->update(['status' => 'archived']);
 
         return redirect()->route('hr.positions.index')
-            ->with('message', 'Position deleted successfully.');
+            ->with('message', 'Position archived successfully.');
     }
 }

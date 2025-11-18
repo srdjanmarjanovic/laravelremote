@@ -17,26 +17,34 @@ class ApplicationController extends Controller
     {
         $user = auth()->user();
 
-        // Check if user is developer
-        if (! $user || ! $user->isDeveloper()) {
+        // Redirect unauthenticated users to login
+        if (! $user) {
             return redirect()->route('login')
-                ->with('error', 'You must be logged in as a developer to apply.');
+                ->with('info', 'Please log in to apply for this position.');
         }
 
-        // Check if profile is complete
-        if (! $user->hasCompleteProfile()) {
+        // Check if user is developer or admin
+        if (! $user->isDeveloper() && ! $user->isAdmin()) {
+            return redirect()->route('positions.show', $position->slug)
+                ->with('error', 'Only developers and admins can apply to positions.');
+        }
+
+        // Check if profile is complete (only required for developers)
+        if ($user->isDeveloper() && ! $user->hasCompleteProfile()) {
             return redirect()->route('developer.profile.edit')
-                ->with('warning', 'Please complete your profile before applying.');
+                ->with('warning', 'Please complete your profile before applying to positions.');
         }
 
         // Check if position accepts applications
         if (! $position->canReceiveApplications()) {
-            return back()->with('error', 'This position is not accepting applications.');
+            return redirect()->route('positions.show', $position->slug)
+                ->with('error', 'This position is not accepting applications.');
         }
 
         // Check if user already applied
         if ($position->applications()->where('user_id', $user->id)->exists()) {
-            return back()->with('error', 'You have already applied to this position.');
+            return redirect()->route('positions.show', $position->slug)
+                ->with('error', 'You have already applied to this position.');
         }
 
         $position->load(['company', 'technologies', 'customQuestions']);

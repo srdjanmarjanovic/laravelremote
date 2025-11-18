@@ -63,7 +63,7 @@ class StorePositionRequest extends FormRequest
             'company_id.exists' => 'The selected company does not exist.',
             'salary_max.gte' => 'The maximum salary must be greater than or equal to the minimum salary.',
             'location_restriction.required_if' => 'Location restriction is required when remote type is timezone or country.',
-            'external_apply_url.required_if' => 'External application URL is required when position is marked as external.',
+            'external_apply_url.required_if' => 'External URL or email address is required when application method is marked as external.',
             'external_apply_url.url' => 'Please provide a valid URL for the external application.',
             'expires_at.after' => 'The expiration date must be in the future.',
             'technology_ids.*.exists' => 'One or more selected technologies are invalid.',

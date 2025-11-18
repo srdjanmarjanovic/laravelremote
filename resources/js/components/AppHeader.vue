@@ -32,9 +32,13 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
 import { toUrl, urlIsActive } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import hr from '@/routes/hr';
+import developer from '@/routes/developer';
+import admin from '@/routes/admin';
+import settings from '@/routes/profile';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { InertiaLinkProps, Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Menu, Search, Briefcase, Users, FileText, Settings as SettingsIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -47,6 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
+const user = computed(() => auth.value?.user);
 
 const isCurrentRoute = computed(
     () => (url: NonNullable<InertiaLinkProps['href']>) =>
@@ -60,13 +65,66 @@ const activeItemStyles = computed(
             : '',
 );
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+// Main navigation items based on user role
+const mainNavItems = computed((): NavItem[] => {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    // HR-specific navigation
+    if (user.value?.role === 'hr') {
+        items.push(
+            {
+                title: 'Positions',
+                href: hr.positions.index().url,
+                icon: Briefcase,
+            },
+            {
+                title: 'Applications',
+                href: hr.applications.index().url,
+                icon: FileText,
+            }
+        );
+    }
+
+    // Developer-specific navigation
+    if (user.value?.role === 'developer') {
+        items.push(
+            {
+                title: 'My Applications',
+                href: developer.applications.index().url,
+                icon: FileText,
+            },
+            {
+                title: 'Profile',
+                href: developer.profile.edit().url,
+                icon: Users,
+            }
+        );
+    }
+
+    // Admin-specific navigation
+    if (user.value?.role === 'admin') {
+        items.push(
+            {
+                title: 'Manage Positions',
+                href: admin.positions.index().url,
+                icon: Briefcase,
+            },
+            {
+                title: 'Settings',
+                href: settings.edit().url,
+                icon: SettingsIcon,
+            }
+        );
+    }
+
+    return items;
+});
 
 const rightNavItems: NavItem[] = [
     {
@@ -148,9 +206,7 @@ const rightNavItems: NavItem[] = [
                     </Sheet>
                 </div>
 
-                <Link :href="dashboard()" class="flex items-center gap-x-2">
-                    <AppLogo />
-                </Link>
+                <AppLogo />
 
                 <!-- Desktop Menu -->
                 <div class="hidden h-full lg:flex lg:flex-1">
