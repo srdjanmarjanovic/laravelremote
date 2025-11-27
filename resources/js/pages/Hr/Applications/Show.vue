@@ -53,7 +53,6 @@ interface Application {
     position: Position & { company: Company; custom_questions: CustomQuestion[] };
     user: User & { developer_profile: DeveloperProfile | null };
     status: 'pending' | 'reviewing' | 'accepted' | 'rejected';
-    cover_letter: string | null;
     custom_answers: Record<string, string> | null;
     applied_at: string;
     reviewed_by_user_id: number | null;
@@ -200,18 +199,6 @@ const breadcrumbs = [
                                         </Button>
                                     </a>
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        <!-- Cover Letter -->
-                        <Card v-if="application.cover_letter">
-                            <CardHeader>
-                                <CardTitle>Cover Letter</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-                                    {{ application.cover_letter }}
-                                </p>
                             </CardContent>
                         </Card>
 

@@ -23,7 +23,6 @@ class PositionController extends Controller
     {
         $user = auth()->user();
 
-        dump(request('show_archived'));
         // Get companies the user has access to
         $companyIds = $user->isAdmin()
             ? Company::pluck('id')
@@ -166,9 +165,21 @@ class PositionController extends Controller
             'creator',
             'customQuestions',
             'applications' => function ($query) {
-                $query->with(['user.developerProfile'])->latest('applied_at');
+                $query->with([
+                    'user' => function ($q) {
+                        $q->withTrashed();
+                    },
+                    'user.developerProfile',
+                ])->latest('applied_at');
             },
         ]);
+
+        // Add user_archived flag to each application
+        $position->applications->transform(function ($application) {
+            $application->user_archived = $application->user->trashed();
+
+            return $application;
+        });
 
         $position->loadCount([
             'applications',
@@ -370,5 +381,23 @@ class PositionController extends Controller
 
         return redirect()->route('hr.positions.index')
             ->with('message', 'Position archived successfully.');
+    }
+
+    /**
+     * Toggle applications open/closed for the position.
+     */
+    public function toggleApplications(Position $position): RedirectResponse
+    {
+        $this->authorize('update', $position);
+
+        $newValue = ! $position->allow_platform_applications;
+        $position->update(['allow_platform_applications' => $newValue]);
+
+        $message = $newValue
+            ? 'Applications are now open for this position.'
+            : 'Applications are now closed for this position.';
+
+        return redirect()->back()
+            ->with('message', $message);
     }
 }

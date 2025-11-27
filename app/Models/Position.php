@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ListingType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +26,7 @@ class Position extends Model
         'remote_type',
         'location_restriction',
         'status',
-        'is_featured',
+        'listing_type',
         'is_external',
         'external_apply_url',
         'allow_platform_applications',
@@ -38,7 +39,7 @@ class Position extends Model
         return [
             'salary_min' => 'decimal:2',
             'salary_max' => 'decimal:2',
-            'is_featured' => 'boolean',
+            'listing_type' => ListingType::class,
             'is_external' => 'boolean',
             'allow_platform_applications' => 'boolean',
             'expires_at' => 'datetime',

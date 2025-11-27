@@ -19,6 +19,10 @@ defineProps<{
     canResetPassword: boolean;
     canRegister: boolean;
 }>();
+
+const navigateToSocial = (provider: string) => {
+    window.location.href = `/auth/${provider}/redirect`;
+};
 </script>
 
 <template>
@@ -43,7 +47,7 @@ defineProps<{
         >
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Email address <span class="text-red-500">*</span></Label>
                     <Input
                         id="email"
                         type="email"
@@ -59,11 +63,11 @@ defineProps<{
 
                 <div class="grid gap-2">
                     <div class="flex items-center justify-between">
-                        <Label for="password">Password</Label>
+                        <Label for="password">Password <span class="text-red-500">*</span></Label>
                         <TextLink
                             v-if="canResetPassword"
                             :href="request()"
-                            class="text-sm"
+                            class="text-sm text-primary"
                             :tabindex="5"
                         >
                             Forgot password?
@@ -105,7 +109,7 @@ defineProps<{
                 v-if="canRegister"
             >
                 Don't have an account?
-                <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
+                <TextLink :href="register()" class="text-primary" :tabindex="5">Sign up</TextLink>
             </div>
 
             <div class="relative">
@@ -123,7 +127,7 @@ defineProps<{
                 <Button
                     variant="outline"
                     type="button"
-                    @click="window.location.href = '/auth/github/redirect'"
+                    @click="navigateToSocial('github')"
                 >
                     <Github class="mr-2 h-4 w-4" />
                     GitHub
@@ -131,7 +135,7 @@ defineProps<{
                 <Button
                     variant="outline"
                     type="button"
-                    @click="window.location.href = '/auth/google/redirect'"
+                    @click="navigateToSocial('google')"
                 >
                     <svg class="mr-2 h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -156,7 +160,7 @@ defineProps<{
                 <Button
                     variant="outline"
                     type="button"
-                    @click="window.location.href = '/auth/linkedin/redirect'"
+                    @click="navigateToSocial('linkedin')"
                 >
                     <Linkedin class="mr-2 h-4 w-4" />
                     LinkedIn

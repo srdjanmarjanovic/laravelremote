@@ -63,7 +63,6 @@ class ApplicationController extends Controller
 
         $application = $position->applications()->create([
             'user_id' => auth()->id(),
-            'cover_letter' => $validated['cover_letter'] ?? null,
             'custom_answers' => $validated['custom_answers'] ?? [],
             'status' => 'pending',
             'applied_at' => now(),

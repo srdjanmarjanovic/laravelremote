@@ -17,9 +17,10 @@ import { type BreadcrumbItem } from '@/types';
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
+    isSocialUser: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -49,7 +50,7 @@ const user = page.props.auth.user;
                     v-slot="{ errors, processing, recentlySuccessful }"
                 >
                     <div class="grid gap-2">
-                        <Label for="name">Name</Label>
+                        <Label for="name">Name <span class="text-red-500">*</span></Label>
                         <Input
                             id="name"
                             class="mt-1 block w-full"
@@ -63,7 +64,7 @@ const user = page.props.auth.user;
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="email">Email address</Label>
+                        <Label for="email">Email address <span class="text-red-500">*</span></Label>
                         <Input
                             id="email"
                             type="email"
@@ -122,7 +123,7 @@ const user = page.props.auth.user;
                 </Form>
             </div>
 
-            <DeleteUser />
+            <DeleteUser :is-social-user="isSocialUser" />
         </SettingsLayout>
     </AppLayout>
 </template>

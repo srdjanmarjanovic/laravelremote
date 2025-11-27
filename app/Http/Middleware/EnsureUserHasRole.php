@@ -19,6 +19,11 @@ class EnsureUserHasRole
             return redirect()->route('login');
         }
 
+        // If user hasn't selected a role yet, redirect to selection page
+        if (! $request->user()->role) {
+            return redirect()->route('account-type.show');
+        }
+
         foreach ($roles as $role) {
             if ($request->user()->role === $role) {
                 return $next($request);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ListingType;
 use App\Models\Position;
 use App\Models\PositionView;
 use App\Models\Technology;
@@ -53,18 +54,28 @@ class PublicPositionController extends Controller
             $query->where('remote_type', $request->input('remote_type'));
         }
 
+        // Filter by location restriction (when remote_type is country)
+        if ($request->filled('location_restriction')) {
+            $query->where('location_restriction', $request->input('location_restriction'));
+        }
+
         // Filter by salary range
         if ($request->filled('min_salary')) {
             $query->where('salary_max', '>=', $request->input('min_salary'));
         }
 
-        // Sort
+        // Sort - Top positions always appear first, then Featured and Regular mixed by published_at
         $sortBy = $request->input('sort', 'published_at');
         $sortOrder = $request->input('order', 'desc');
 
+        // Always prioritize top positions first (1), then everything else (2)
+        $query->orderByRaw('CASE WHEN listing_type = ? THEN 1 ELSE 2 END', [
+            ListingType::Top->value,
+        ]);
+
+        // Then apply the requested sort (Featured and Regular will be mixed together)
         if ($sortBy === 'featured') {
-            $query->orderBy('is_featured', 'desc')
-                ->orderBy('published_at', 'desc');
+            $query->orderBy('published_at', 'desc');
         } else {
             $query->orderBy($sortBy, $sortOrder);
         }
@@ -76,7 +87,7 @@ class PublicPositionController extends Controller
         return view('positions.index', [
             'positions' => $positions,
             'technologies' => $technologies,
-            'filters' => $request->only(['search', 'technology', 'seniority', 'remote_type', 'min_salary', 'sort', 'order']),
+            'filters' => $request->only(['search', 'technology', 'seniority', 'remote_type', 'location_restriction', 'min_salary', 'sort', 'order']),
         ]);
     }
 

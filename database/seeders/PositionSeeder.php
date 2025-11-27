@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ListingType;
 use App\Models\Company;
 use App\Models\Position;
 use App\Models\Technology;
@@ -37,9 +38,18 @@ class PositionSeeder extends Seeder
                 // Decide position status
                 $statusRand = rand(1, 100);
                 if ($statusRand <= 70) {
+                    // Published position - randomly assign listing_type to mix featured/regular by published_at
+                    $listingTypeRand = rand(1, 100);
+                    $listingType = match (true) {
+                        $listingTypeRand <= 5 => ListingType::Top,      // ~5% top
+                        $listingTypeRand <= 20 => ListingType::Featured, // ~15% featured
+                        default => ListingType::Regular,                  // ~80% regular
+                    };
+
                     $position = Position::factory()->published()->create([
                         'company_id' => $company->id,
                         'created_by_user_id' => $creator->id,
+                        'listing_type' => $listingType,
                     ]);
                 } elseif ($statusRand <= 85) {
                     $position = Position::factory()->draft()->create([
@@ -84,11 +94,5 @@ class PositionSeeder extends Seeder
                 }
             }
         }
-
-        // Mark some positions as featured (admin only)
-        Position::where('status', 'published')
-            ->inRandomOrder()
-            ->limit(5)
-            ->update(['is_featured' => true]);
     }
 }

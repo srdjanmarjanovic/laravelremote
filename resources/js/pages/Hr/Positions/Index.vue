@@ -49,7 +49,7 @@ interface Position {
     status: 'draft' | 'published' | 'expired' | 'archived';
     seniority: string | null;
     remote_type: string;
-    is_featured: boolean;
+    listing_type: string;
     applications_count: number;
     views_count: number;
     published_at: string | null;
@@ -260,7 +260,13 @@ const breadcrumbs = [
                                         {{ position.status }}
                                     </Badge>
                                     <Badge
-                                        v-if="position.is_featured"
+                                        v-if="position.listing_type === 'top'"
+                                        class="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                    >
+                                        ⭐ Top
+                                    </Badge>
+                                    <Badge
+                                        v-else-if="position.listing_type === 'featured'"
                                         class="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
                                     >
                                         Featured

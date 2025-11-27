@@ -28,7 +28,13 @@ class ApplicationController extends Controller
             ->whereHas('position', function ($query) use ($companyIds) {
                 $query->whereIn('company_id', $companyIds);
             })
-            ->with(['position.company', 'user.developerProfile']);
+            ->with([
+                'position.company',
+                'user' => function ($query) {
+                    $query->withTrashed();
+                },
+                'user.developerProfile',
+            ]);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -54,6 +60,13 @@ class ApplicationController extends Controller
 
         $applications = $query->paginate(20)->withQueryString();
 
+        // Add user_archived flag to applications
+        $applications->through(function ($application) {
+            $application->user_archived = $application->user->trashed();
+
+            return $application;
+        });
+
         // Get positions for filter dropdown
         $positions = \App\Models\Position::query()
             ->whereIn('company_id', $companyIds)
@@ -70,9 +83,18 @@ class ApplicationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Application $application): Response
+    public function show(Application $application): Response|RedirectResponse
     {
         $this->authorize('view', $application);
+
+        // Check if user is archived
+        $application->load(['user' => function ($query) {
+            $query->withTrashed();
+        }]);
+
+        if ($application->user->trashed()) {
+            return back()->with('error', 'Cannot view details of archived user application.');
+        }
 
         $application->load([
             'position.company',
@@ -94,9 +116,27 @@ class ApplicationController extends Controller
     {
         $this->authorize('updateStatus', $application);
 
-        $validated = $request->validate([
-            'status' => ['required', 'in:pending,reviewing,accepted,rejected'],
-        ]);
+        // Check if user is archived
+        $application->load(['user' => function ($query) {
+            $query->withTrashed();
+        }]);
+
+        $userArchived = $application->user->trashed();
+
+        // For archived users, only allow changing to rejected
+        if ($userArchived) {
+            $validated = $request->validate([
+                'status' => ['required', 'in:rejected'],
+            ]);
+
+            if ($validated['status'] !== 'rejected') {
+                return back()->with('error', 'Can only reject applications from archived users.');
+            }
+        } else {
+            $validated = $request->validate([
+                'status' => ['required', 'in:pending,reviewing,accepted,rejected'],
+            ]);
+        }
 
         $application->update([
             'status' => $validated['status'],

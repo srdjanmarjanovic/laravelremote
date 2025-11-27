@@ -3,7 +3,6 @@ import { ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trash2, Plus, GripVertical } from 'lucide-vue-next';
 
@@ -67,8 +66,9 @@ const updateQuestion = (index: number, field: keyof CustomQuestion, value: any) 
 <template>
     <div class="space-y-4">
         <div
-            v-for="(question, index) in questions.filter((q) => !q._destroy)"
-            :key="index"
+            v-for="(question, index) in questions"
+            v-show="!question._destroy"
+            :key="question.id || `new-${index}`"
             class="group"
         >
             <Card>
@@ -80,30 +80,49 @@ const updateQuestion = (index: number, field: keyof CustomQuestion, value: any) 
                         <div class="flex-1 space-y-3">
                             <div>
                                 <Label :for="`question-${index}`">
-                                    Question {{ index + 1 }}
+                                    Question {{ questions.filter((q, i) => i <= index && !q._destroy).length }}
                                 </Label>
                                 <Input
                                     :id="`question-${index}`"
-                                    v-model="questions[index].question_text"
+                                    v-model="question.question_text"
                                     @update:modelValue="updateQuestions"
                                     placeholder="e.g., Why do you want to work for us?"
                                     class="mt-1"
                                 />
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <Checkbox
-                                    :id="`required-${index}`"
-                                    :checked="question.is_required"
-                                    @update:checked="
-                                        (checked: boolean) => updateQuestion(index, 'is_required', checked)
-                                    "
-                                />
-                                <Label
-                                    :for="`required-${index}`"
-                                    class="cursor-pointer text-sm font-normal"
-                                >
-                                    Required
-                                </Label>
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        :id="`required-${index}`"
+                                        type="radio"
+                                        :name="`question-${index}-type`"
+                                        :checked="question.is_required === true"
+                                        @change="updateQuestion(index, 'is_required', true)"
+                                        class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-gray-800"
+                                    />
+                                    <Label
+                                        :for="`required-${index}`"
+                                        class="cursor-pointer text-sm font-normal"
+                                    >
+                                        Required
+                                    </Label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        :id="`optional-${index}`"
+                                        type="radio"
+                                        :name="`question-${index}-type`"
+                                        :checked="question.is_required === false"
+                                        @change="updateQuestion(index, 'is_required', false)"
+                                        class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-gray-800"
+                                    />
+                                    <Label
+                                        :for="`optional-${index}`"
+                                        class="cursor-pointer text-sm font-normal"
+                                    >
+                                        Optional
+                                    </Label>
+                                </div>
                             </div>
                         </div>
                         <Button

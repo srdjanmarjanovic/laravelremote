@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -14,7 +15,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -106,6 +107,29 @@ class User extends Authenticatable
         return $this->developerProfile && $this->developerProfile->isComplete();
     }
 
+    /**
+     * Check if the user has a complete company profile.
+     * For HR users, they need to belong to at least one company with a complete profile.
+     */
+    public function hasCompleteCompanyProfile(): bool
+    {
+        if (! $this->isHR()) {
+            return true;
+        }
+
+        $company = $this->companies()->first();
+
+        return $company && $company->isComplete();
+    }
+
+    /**
+     * Get the primary company for the HR user.
+     */
+    public function primaryCompany(): ?Company
+    {
+        return $this->companies()->first();
+    }
+
     public function canAccessCompany(Company $company): bool
     {
         return $this->isAdmin() ||
@@ -117,5 +141,10 @@ class User extends Authenticatable
         return $this->isAdmin() ||
                $position->created_by_user_id === $this->id ||
                $this->canAccessCompany($position->company);
+    }
+
+    public function isSocialUser(): bool
+    {
+        return $this->socialAccounts()->exists();
     }
 }

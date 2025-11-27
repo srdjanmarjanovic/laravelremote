@@ -1,5 +1,9 @@
 @extends('layouts.public')
 
+@php
+use App\Enums\ListingType;
+@endphp
+
 @section('title', 'Find Your Dream Remote Job')
 
 @section('content')
@@ -87,7 +91,7 @@
 
                 <div class="mt-12 grid gap-6 lg:grid-cols-2">
                     @foreach($featured_positions as $position)
-                        <a href="{{ route('positions.show', $position->slug) }}" class="group block bg-card rounded-lg shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden border border-border">
+                        <a href="{{ route('positions.show', $position->slug) }}" class="group block rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden border-2 border-primary bg-gradient-to-br from-primary/10 via-primary/5 to-card shadow-lg shadow-primary/30">
                             <div class="p-6">
                                 <div class="flex items-start justify-between mb-4">
                                     <div class="flex items-center">
@@ -99,17 +103,21 @@
                                             </div>
                                         @endif
                                         <div>
-                                            <h3 class="text-xl font-semibold text-card-foreground group-hover:text-primary transition-colors">
-                                                {{ $position->title }}
-                                            </h3>
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="{{ $position->listing_type === ListingType::Top ? 'text-3xl' : 'text-xl' }} font-semibold text-card-foreground group-hover:text-primary transition-colors">
+                                                    {{ $position->title }}
+                                                </h3>
+                                                @if($position->listing_type === ListingType::Top)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary">
+                                                        ⭐ Top
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <p class="text-primary font-medium">
                                                 {{ $position->company->name }}
                                             </p>
                                         </div>
                                     </div>
-                                    <span class="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-                                        ⭐ Featured
-                                    </span>
                                 </div>
 
                                 <p class="text-muted-foreground mb-4 line-clamp-2">

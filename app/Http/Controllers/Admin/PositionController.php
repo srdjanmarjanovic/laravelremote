@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ListingType;
 use App\Http\Controllers\Controller;
 use App\Models\Position;
 use Illuminate\Http\RedirectResponse;
@@ -59,9 +60,13 @@ class PositionController extends Controller
     {
         $this->authorize('feature', $position);
 
-        $position->update(['is_featured' => ! $position->is_featured]);
+        $newType = $position->listing_type === ListingType::Featured
+            ? ListingType::Regular
+            : ListingType::Featured;
 
-        $message = $position->is_featured
+        $position->update(['listing_type' => $newType]);
+
+        $message = $position->listing_type === ListingType::Featured
             ? 'Position featured successfully.'
             : 'Position unfeatured successfully.';
 
@@ -97,11 +102,11 @@ class PositionController extends Controller
             switch ($validated['action']) {
                 case 'feature':
                     $this->authorize('feature', $position);
-                    $position->update(['is_featured' => true]);
+                    $position->update(['listing_type' => ListingType::Featured]);
                     break;
                 case 'unfeature':
                     $this->authorize('feature', $position);
-                    $position->update(['is_featured' => false]);
+                    $position->update(['listing_type' => ListingType::Regular]);
                     break;
                 case 'archive':
                     $this->authorize('archive', $position);

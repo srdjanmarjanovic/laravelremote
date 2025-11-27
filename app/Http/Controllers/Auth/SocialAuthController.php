@@ -19,7 +19,9 @@ class SocialAuthController extends Controller
     {
         $this->validateProvider($provider);
 
-        return Socialite::driver($provider)->redirect();
+        $driver = $provider === 'linkedin' ? 'linkedin-openid' : $provider;
+
+        return Socialite::driver($driver)->redirect();
     }
 
     /**
@@ -29,8 +31,10 @@ class SocialAuthController extends Controller
     {
         $this->validateProvider($provider);
 
+        $driver = $provider === 'linkedin' ? 'linkedin-openid' : $provider;
+
         try {
-            $socialUser = Socialite::driver($provider)->user();
+            $socialUser = Socialite::driver($driver)->user();
         } catch (\Exception $e) {
             return redirect()->route('login')->with('error', 'Authentication failed. Please try again.');
         }
@@ -44,7 +48,7 @@ class SocialAuthController extends Controller
             // Log in the existing user
             Auth::login($socialAccount->user);
 
-            return $this->redirectToDashboard($socialAccount->user);
+            return redirect()->route('dashboard');
         }
 
         // Check if user exists with this email
@@ -59,7 +63,7 @@ class SocialAuthController extends Controller
 
             Auth::login($user);
 
-            return $this->redirectToDashboard($user);
+            return redirect()->route('dashboard');
         }
 
         // Create new user and social account
@@ -68,7 +72,6 @@ class SocialAuthController extends Controller
             'email' => $socialUser->getEmail(),
             'password' => bcrypt(Str::random(32)),
             'email_verified_at' => now(),
-            'role' => 'developer', // Default role
         ]);
 
         $user->socialAccounts()->create([
@@ -78,8 +81,7 @@ class SocialAuthController extends Controller
 
         Auth::login($user);
 
-        // Redirect to onboarding or profile completion
-        return redirect()->route('dashboard')->with('message', 'Welcome! Please complete your profile.');
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -90,21 +92,5 @@ class SocialAuthController extends Controller
         if (! in_array($provider, ['github', 'google', 'linkedin'])) {
             abort(404);
         }
-    }
-
-    /**
-     * Redirect user to appropriate dashboard based on role.
-     */
-    protected function redirectToDashboard(User $user): RedirectResponse
-    {
-        if ($user->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        if ($user->isHR()) {
-            return redirect()->route('hr.dashboard');
-        }
-
-        return redirect()->route('developer.dashboard');
     }
 }

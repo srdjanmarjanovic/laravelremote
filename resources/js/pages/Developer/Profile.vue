@@ -215,7 +215,7 @@ const breadcrumbs = [
                 <!-- Summary -->
                 <Card>
                     <CardHeader>
-                        <CardTitle>Professional Summary *</CardTitle>
+                        <CardTitle>Professional Summary <span class="text-red-500">*</span></CardTitle>
                         <CardDescription>Brief overview of your experience and skills</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -236,7 +236,7 @@ const breadcrumbs = [
                 <!-- CV Upload -->
                 <Card>
                     <CardHeader>
-                        <CardTitle>Curriculum Vitae (CV) *</CardTitle>
+                        <CardTitle>Curriculum Vitae (CV) <span class="text-red-500">*</span></CardTitle>
                         <CardDescription>Upload your CV/Resume (PDF, DOC, or DOCX)</CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-4">

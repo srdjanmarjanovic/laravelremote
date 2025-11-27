@@ -1,12 +1,15 @@
 <?php
 
+use App\Enums\ListingType;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PositionController as AdminPositionController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\Auth\AccountTypeController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Developer\DashboardController as DeveloperDashboardController;
 use App\Http\Controllers\Developer\ProfileController as DeveloperProfileController;
 use App\Http\Controllers\Hr\ApplicationController as HrApplicationController;
+use App\Http\Controllers\Hr\CompanySetupController;
 use App\Http\Controllers\Hr\DashboardController as HrDashboardController;
 use App\Http\Controllers\Hr\PositionController as HrPositionController;
 use App\Http\Controllers\PublicPositionController;
@@ -29,7 +32,7 @@ Route::get('/', function () {
         ],
         'featured_positions' => \App\Models\Position::query()
             ->where('status', 'published')
-            ->where('is_featured', true)
+            ->whereIn('listing_type', [ListingType::Top, ListingType::Featured])
             ->with(['company', 'technologies'])
             ->withCount(['applications', 'views'])
             ->latest('published_at')
@@ -61,10 +64,21 @@ Route::prefix('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+// Account type selection (for users without a role)
+Route::middleware(['auth'])->group(function () {
+    Route::get('select-account-type', [AccountTypeController::class, 'show'])->name('account-type.show');
+    Route::post('select-account-type', [AccountTypeController::class, 'store'])->name('account-type.store');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard - redirect based on role
     Route::get('dashboard', function () {
         $user = auth()->user();
+
+        // If user hasn't selected a role yet, redirect to selection
+        if (! $user->role) {
+            return redirect()->route('account-type.show');
+        }
 
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard');
@@ -112,12 +126,22 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
 */
 
 Route::middleware(['auth', 'verified', 'role:hr'])->prefix('hr')->name('hr.')->group(function () {
+    // Company setup and management (accessible without complete company profile)
+    Route::get('company/setup', [CompanySetupController::class, 'show'])->name('company.setup');
+    Route::get('company/edit', [CompanySetupController::class, 'edit'])->name('company.edit');
+    Route::post('company/setup', [CompanySetupController::class, 'store'])->name('company.store');
+    Route::put('company', [CompanySetupController::class, 'update'])->name('company.update');
+    Route::delete('company/logo', [CompanySetupController::class, 'deleteLogo'])->name('company.logo.delete');
+
     Route::get('dashboard', HrDashboardController::class)->name('dashboard');
 
-    // Position management
-    Route::resource('positions', HrPositionController::class)->except(['destroy']);
-    Route::get('positions/{position}/preview', [HrPositionController::class, 'preview'])->name('positions.preview');
-    Route::post('positions/{position}/archive', [HrPositionController::class, 'archive'])->name('positions.archive');
+    // Position management (requires complete company profile)
+    Route::middleware(['company.complete'])->group(function () {
+        Route::resource('positions', HrPositionController::class)->except(['destroy']);
+        Route::get('positions/{position}/preview', [HrPositionController::class, 'preview'])->name('positions.preview');
+        Route::post('positions/{position}/archive', [HrPositionController::class, 'archive'])->name('positions.archive');
+        Route::post('positions/{position}/toggle-applications', [HrPositionController::class, 'toggleApplications'])->name('positions.toggle-applications');
+    });
 
     // Application management
     Route::get('applications', [HrApplicationController::class, 'index'])->name('applications.index');

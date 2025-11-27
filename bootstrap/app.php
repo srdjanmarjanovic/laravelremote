@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureCompanyProfileComplete;
 use App\Http\Middleware\EnsureProfileComplete;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleAppearance;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'profile.complete' => EnsureProfileComplete::class,
+            'company.complete' => EnsureCompanyProfileComplete::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

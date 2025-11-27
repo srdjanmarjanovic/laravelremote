@@ -20,7 +20,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const passwordInput = useTemplateRef('passwordInput');
+defineProps<{
+    isSocialUser: boolean;
+}>();
+
+const confirmationInput = useTemplateRef('confirmationInput');
 </script>
 
 <template>
@@ -48,7 +52,7 @@ const passwordInput = useTemplateRef('passwordInput');
                     <Form
                         v-bind="ProfileController.destroy.form()"
                         reset-on-success
-                        @error="() => passwordInput?.$el?.focus()"
+                        @error="() => confirmationInput?.$el?.focus()"
                         :options="{
                             preserveScroll: true,
                         }"
@@ -63,24 +67,42 @@ const passwordInput = useTemplateRef('passwordInput');
                             <DialogDescription>
                                 Once your account is deleted, all of its
                                 resources and data will also be permanently
-                                deleted. Please enter your password to confirm
-                                you would like to permanently delete your
-                                account.
+                                deleted. Please enter your
+                                {{ isSocialUser ? 'email' : 'password' }} to
+                                confirm you would like to permanently delete
+                                your account.
                             </DialogDescription>
                         </DialogHeader>
 
                         <div class="grid gap-2">
-                            <Label for="password" class="sr-only"
+                            <Label
+                                v-if="isSocialUser"
+                                for="email"
+                                class="sr-only"
+                                >Email</Label
+                            >
+                            <Label v-else for="password" class="sr-only"
                                 >Password</Label
                             >
                             <Input
+                                v-if="isSocialUser"
+                                id="email"
+                                type="email"
+                                name="email"
+                                ref="confirmationInput"
+                                placeholder="your-email@example.com"
+                            />
+                            <Input
+                                v-else
                                 id="password"
                                 type="password"
                                 name="password"
-                                ref="passwordInput"
+                                ref="confirmationInput"
                                 placeholder="Password"
                             />
-                            <InputError :message="errors.password" />
+                            <InputError
+                                :message="isSocialUser ? errors.email : errors.password"
+                            />
                         </div>
 
                         <DialogFooter class="gap-2">

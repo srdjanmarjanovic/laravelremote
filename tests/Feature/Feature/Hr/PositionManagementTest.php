@@ -52,7 +52,7 @@ test('hr user can create a position', function () {
         'salary_max' => 120000,
         'remote_type' => 'global',
         'status' => 'published',
-        'is_featured' => false,
+        'listing_type' => \App\Enums\ListingType::Regular,
         'is_external' => false,
         'allow_platform_applications' => true,
         'technology_ids' => [$technology->id],

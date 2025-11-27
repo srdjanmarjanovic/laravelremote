@@ -46,7 +46,7 @@ const inputEmail = ref(props.email);
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="password">Password</Label>
+                    <Label for="password">Password <span class="text-red-500">*</span></Label>
                     <Input
                         id="password"
                         type="password"
@@ -61,7 +61,7 @@ const inputEmail = ref(props.email);
 
                 <div class="grid gap-2">
                     <Label for="password_confirmation">
-                        Confirm Password
+                        Confirm Password <span class="text-red-500">*</span>
                     </Label>
                     <Input
                         id="password_confirmation"

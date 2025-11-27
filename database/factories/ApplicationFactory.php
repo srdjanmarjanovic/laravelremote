@@ -19,7 +19,6 @@ class ApplicationFactory extends Factory
         return [
             'position_id' => \App\Models\Position::factory(),
             'user_id' => \App\Models\User::factory()->developer(),
-            'cover_letter' => fake()->paragraph(4),
             'custom_answers' => null,
             'status' => 'pending',
             'reviewed_by_user_id' => null,

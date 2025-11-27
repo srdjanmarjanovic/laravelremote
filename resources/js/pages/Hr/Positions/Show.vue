@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+    ArchiveX,
     Briefcase,
     Building2,
     Calendar,
@@ -16,8 +17,9 @@ import {
     Eye,
     FileText,
     Globe,
+    LockKeyhole,
+    LockKeyholeOpen,
     Mail,
-    MapPin,
     Monitor,
     Smartphone,
     Tablet,
@@ -62,6 +64,7 @@ interface Application {
     user: User;
     status: 'pending' | 'reviewing' | 'accepted' | 'rejected';
     applied_at: string;
+    user_archived: boolean;
 }
 
 interface Position {
@@ -73,10 +76,10 @@ interface Position {
     seniority: 'junior' | 'mid' | 'senior' | 'lead' | 'principal';
     salary_min: number | null;
     salary_max: number | null;
-    remote_type: 'office' | 'hybrid' | 'europe' | 'global';
-    location: string | null;
+    remote_type: 'global' | 'timezone' | 'country';
+    location_restriction: string | null;
     status: 'draft' | 'published' | 'closed';
-    is_featured: boolean;
+    listing_type: string;
     is_external: boolean;
     external_url: string | null;
     allow_platform_applications: boolean;
@@ -170,14 +173,14 @@ const getSeniorityLabel = (seniority: string) => {
     return labels[seniority as keyof typeof labels] || seniority;
 };
 
-const getRemoteTypeLabel = (remoteType: string) => {
-    const labels = {
-        office: 'Office Only',
-        hybrid: 'Hybrid',
-        europe: 'Remote (Europe)',
-        global: 'Remote (Global)',
-    };
-    return labels[remoteType as keyof typeof labels] || remoteType;
+const getLocationLabel = (remoteType: string, locationRestriction: string | null) => {
+    if (remoteType === 'global') {
+        return 'Global';
+    }
+    if (locationRestriction) {
+        return locationRestriction;
+    }
+    return remoteType === 'timezone' ? 'Timezone Restricted' : 'Country Restricted';
 };
 
 const getApplicationStatusColor = (status: string) => {
@@ -188,6 +191,32 @@ const getApplicationStatusColor = (status: string) => {
         rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     };
     return colors[status as keyof typeof colors] || colors.pending;
+};
+
+const rejectApplication = (applicationId: number) => {
+    const form = useForm({
+        status: 'rejected',
+        _method: 'PATCH',
+    });
+
+    form.post(hr.applications.update(applicationId).url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Refresh the position data
+            location.reload();
+        },
+    });
+};
+
+const toggleApplications = () => {
+    const form = useForm({});
+
+    form.post(hr.positions['toggle-applications'](props.position.id).url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            location.reload();
+        },
+    });
 };
 
 const getDeviceIcon = (device: string) => {
@@ -532,6 +561,16 @@ const breadcrumbs = [
                             Edit
                         </Button>
                     </Link>
+                    <Button 
+                        v-if="!position.is_external" 
+                        size="sm" 
+                        :variant="position.allow_platform_applications ? 'destructive' : 'default'"
+                        @click="toggleApplications"
+                    >
+                        <LockKeyhole v-if="position.allow_platform_applications" class="mr-2 h-4 w-4" />
+                        <LockKeyholeOpen v-else class="mr-2 h-4 w-4" />
+                        {{ position.allow_platform_applications ? 'Close Applications' : 'Open Applications' }}
+                    </Button>
                 </div>
             </div>
 
@@ -547,7 +586,10 @@ const breadcrumbs = [
                                         <Badge :class="getStatusColor(position.status)">
                                             {{ position.status }}
                                         </Badge>
-                                        <Badge v-if="position.is_featured" variant="secondary">
+                                        <Badge v-if="position.listing_type === 'top'" variant="secondary">
+                                            ⭐ Top
+                                        </Badge>
+                                        <Badge v-else-if="position.listing_type === 'featured'" variant="secondary">
                                             Featured
                                         </Badge>
                                         <Badge
@@ -575,14 +617,7 @@ const breadcrumbs = [
                                 </div>
                                 <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                     <Globe class="h-4 w-4" />
-                                    <span>{{ getRemoteTypeLabel(position.remote_type) }}</span>
-                                </div>
-                                <div
-                                    v-if="position.location"
-                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
-                                >
-                                    <MapPin class="h-4 w-4" />
-                                    <span>{{ position.location }}</span>
+                                    <span>{{ getLocationLabel(position.remote_type, position.location_restriction) }}</span>
                                 </div>
                                 <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                     <DollarSign class="h-4 w-4" />
@@ -689,11 +724,17 @@ const breadcrumbs = [
 
                                 <TabsContent value="all" class="mt-4">
                                     <div v-if="filteredApplications.length > 0" class="space-y-3">
-                                        <Link
+                                        <component
+                                            :is="application.user_archived ? 'div' : Link"
                                             v-for="application in filteredApplications"
                                             :key="application.id"
-                                            :href="hr.applications.show(application.id).url"
-                                            class="block rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                                            :href="!application.user_archived ? hr.applications.show(application.id).url : undefined"
+                                            :class="[
+                                                'block rounded-lg border p-4 transition-colors dark:border-gray-700',
+                                                application.user_archived
+                                                    ? 'cursor-not-allowed opacity-60'
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            ]"
                                         >
                                             <div class="flex items-start justify-between">
                                                 <div class="flex-1 space-y-1">
@@ -704,6 +745,13 @@ const breadcrumbs = [
                                                         <Badge :class="getApplicationStatusColor(application.status)">
                                                             {{ application.status }}
                                                         </Badge>
+                                                        <Badge
+                                                            v-if="application.user_archived"
+                                                            class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                                        >
+                                                            <ArchiveX class="mr-1 h-3 w-3" />
+                                                            Archived
+                                                        </Badge>
                                                     </div>
                                                     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                         <Mail class="h-3 w-3" />
@@ -713,8 +761,17 @@ const breadcrumbs = [
                                                         Applied {{ formatDate(application.applied_at) }}
                                                     </p>
                                                 </div>
+                                                <div v-if="application.user_archived && application.status !== 'rejected'">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        @click.prevent="rejectApplication(application.id)"
+                                                    >
+                                                        Move to rejected
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </Link>
+                                        </component>
                                     </div>
                                     <div v-else class="py-8 text-center">
                                         <Users class="mx-auto h-12 w-12 text-gray-400" />
@@ -726,11 +783,17 @@ const breadcrumbs = [
 
                                 <TabsContent value="pending" class="mt-4">
                                     <div v-if="filteredApplications.length > 0" class="space-y-3">
-                                        <Link
+                                        <component
+                                            :is="application.user_archived ? 'div' : Link"
                                             v-for="application in filteredApplications"
                                             :key="application.id"
-                                            :href="hr.applications.show(application.id).url"
-                                            class="block rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                                            :href="!application.user_archived ? hr.applications.show(application.id).url : undefined"
+                                            :class="[
+                                                'block rounded-lg border p-4 transition-colors dark:border-gray-700',
+                                                application.user_archived
+                                                    ? 'cursor-not-allowed opacity-60'
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            ]"
                                         >
                                             <div class="flex items-start justify-between">
                                                 <div class="flex-1 space-y-1">
@@ -741,6 +804,13 @@ const breadcrumbs = [
                                                         <Badge :class="getApplicationStatusColor(application.status)">
                                                             {{ application.status }}
                                                         </Badge>
+                                                        <Badge
+                                                            v-if="application.user_archived"
+                                                            class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                                        >
+                                                            <ArchiveX class="mr-1 h-3 w-3" />
+                                                            Archived
+                                                        </Badge>
                                                     </div>
                                                     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                         <Mail class="h-3 w-3" />
@@ -750,8 +820,17 @@ const breadcrumbs = [
                                                         Applied {{ formatDate(application.applied_at) }}
                                                     </p>
                                                 </div>
+                                                <div v-if="application.user_archived && application.status !== 'rejected'">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        @click.prevent="rejectApplication(application.id)"
+                                                    >
+                                                        Move to rejected
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </Link>
+                                        </component>
                                     </div>
                                     <div v-else class="py-8 text-center text-gray-500 dark:text-gray-400">
                                         No pending applications
@@ -760,11 +839,17 @@ const breadcrumbs = [
 
                                 <TabsContent value="reviewing" class="mt-4">
                                     <div v-if="filteredApplications.length > 0" class="space-y-3">
-                                        <Link
+                                        <component
+                                            :is="application.user_archived ? 'div' : Link"
                                             v-for="application in filteredApplications"
                                             :key="application.id"
-                                            :href="hr.applications.show(application.id).url"
-                                            class="block rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                                            :href="!application.user_archived ? hr.applications.show(application.id).url : undefined"
+                                            :class="[
+                                                'block rounded-lg border p-4 transition-colors dark:border-gray-700',
+                                                application.user_archived
+                                                    ? 'cursor-not-allowed opacity-60'
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            ]"
                                         >
                                             <div class="flex items-start justify-between">
                                                 <div class="flex-1 space-y-1">
@@ -775,6 +860,13 @@ const breadcrumbs = [
                                                         <Badge :class="getApplicationStatusColor(application.status)">
                                                             {{ application.status }}
                                                         </Badge>
+                                                        <Badge
+                                                            v-if="application.user_archived"
+                                                            class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                                        >
+                                                            <ArchiveX class="mr-1 h-3 w-3" />
+                                                            Archived
+                                                        </Badge>
                                                     </div>
                                                     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                         <Mail class="h-3 w-3" />
@@ -784,8 +876,17 @@ const breadcrumbs = [
                                                         Applied {{ formatDate(application.applied_at) }}
                                                     </p>
                                                 </div>
+                                                <div v-if="application.user_archived && application.status !== 'rejected'">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        @click.prevent="rejectApplication(application.id)"
+                                                    >
+                                                        Move to rejected
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </Link>
+                                        </component>
                                     </div>
                                     <div v-else class="py-8 text-center text-gray-500 dark:text-gray-400">
                                         No applications under review
@@ -794,11 +895,17 @@ const breadcrumbs = [
 
                                 <TabsContent value="accepted" class="mt-4">
                                     <div v-if="filteredApplications.length > 0" class="space-y-3">
-                                        <Link
+                                        <component
+                                            :is="application.user_archived ? 'div' : Link"
                                             v-for="application in filteredApplications"
                                             :key="application.id"
-                                            :href="hr.applications.show(application.id).url"
-                                            class="block rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                                            :href="!application.user_archived ? hr.applications.show(application.id).url : undefined"
+                                            :class="[
+                                                'block rounded-lg border p-4 transition-colors dark:border-gray-700',
+                                                application.user_archived
+                                                    ? 'cursor-not-allowed opacity-60'
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            ]"
                                         >
                                             <div class="flex items-start justify-between">
                                                 <div class="flex-1 space-y-1">
@@ -809,6 +916,13 @@ const breadcrumbs = [
                                                         <Badge :class="getApplicationStatusColor(application.status)">
                                                             {{ application.status }}
                                                         </Badge>
+                                                        <Badge
+                                                            v-if="application.user_archived"
+                                                            class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                                        >
+                                                            <ArchiveX class="mr-1 h-3 w-3" />
+                                                            Archived
+                                                        </Badge>
                                                     </div>
                                                     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                         <Mail class="h-3 w-3" />
@@ -818,8 +932,17 @@ const breadcrumbs = [
                                                         Applied {{ formatDate(application.applied_at) }}
                                                     </p>
                                                 </div>
+                                                <div v-if="application.user_archived && application.status !== 'rejected'">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        @click.prevent="rejectApplication(application.id)"
+                                                    >
+                                                        Move to rejected
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </Link>
+                                        </component>
                                     </div>
                                     <div v-else class="py-8 text-center text-gray-500 dark:text-gray-400">
                                         No accepted applications
@@ -828,11 +951,17 @@ const breadcrumbs = [
 
                                 <TabsContent value="rejected" class="mt-4">
                                     <div v-if="filteredApplications.length > 0" class="space-y-3">
-                                        <Link
+                                        <component
+                                            :is="application.user_archived ? 'div' : Link"
                                             v-for="application in filteredApplications"
                                             :key="application.id"
-                                            :href="hr.applications.show(application.id).url"
-                                            class="block rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                                            :href="!application.user_archived ? hr.applications.show(application.id).url : undefined"
+                                            :class="[
+                                                'block rounded-lg border p-4 transition-colors dark:border-gray-700',
+                                                application.user_archived
+                                                    ? 'cursor-not-allowed opacity-60'
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            ]"
                                         >
                                             <div class="flex items-start justify-between">
                                                 <div class="flex-1 space-y-1">
@@ -843,6 +972,13 @@ const breadcrumbs = [
                                                         <Badge :class="getApplicationStatusColor(application.status)">
                                                             {{ application.status }}
                                                         </Badge>
+                                                        <Badge
+                                                            v-if="application.user_archived"
+                                                            class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                                        >
+                                                            <ArchiveX class="mr-1 h-3 w-3" />
+                                                            Archived
+                                                        </Badge>
                                                     </div>
                                                     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                         <Mail class="h-3 w-3" />
@@ -852,8 +988,17 @@ const breadcrumbs = [
                                                         Applied {{ formatDate(application.applied_at) }}
                                                     </p>
                                                 </div>
+                                                <div v-if="application.user_archived && application.status !== 'rejected'">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        @click.prevent="rejectApplication(application.id)"
+                                                    >
+                                                        Move to rejected
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </Link>
+                                        </component>
                                     </div>
                                     <div v-else class="py-8 text-center text-gray-500 dark:text-gray-400">
                                         No rejected applications

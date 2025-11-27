@@ -11,6 +11,10 @@ import { login } from '@/routes';
 import { store } from '@/routes/register';
 import { Form, Head } from '@inertiajs/vue3';
 import { Github, Linkedin } from 'lucide-vue-next';
+
+const navigateToSocial = (provider: string) => {
+    window.location.href = `/auth/${provider}/redirect`;
+};
 </script>
 
 <template>
@@ -28,7 +32,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
         >
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="name">Name</Label>
+                    <Label for="name">Name <span class="text-red-500">*</span></Label>
                     <Input
                         id="name"
                         type="text"
@@ -43,7 +47,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Email address <span class="text-red-500">*</span></Label>
                     <Input
                         id="email"
                         type="email"
@@ -57,7 +61,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="password">Password</Label>
+                    <Label for="password">Password <span class="text-red-500">*</span></Label>
                     <Input
                         id="password"
                         type="password"
@@ -71,7 +75,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="password_confirmation">Confirm password</Label>
+                    <Label for="password_confirmation">Confirm password <span class="text-red-500">*</span></Label>
                     <Input
                         id="password_confirmation"
                         type="password"
@@ -100,7 +104,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
                 Already have an account?
                 <TextLink
                     :href="login()"
-                    class="underline underline-offset-4"
+                    class="text-primary underline underline-offset-4"
                     :tabindex="6"
                     >Log in</TextLink
                 >
@@ -121,7 +125,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
                 <Button
                     variant="outline"
                     type="button"
-                    @click="window.location.href = '/auth/github/redirect'"
+                    @click="navigateToSocial('github')"
                 >
                     <Github class="mr-2 h-4 w-4" />
                     GitHub
@@ -129,7 +133,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
                 <Button
                     variant="outline"
                     type="button"
-                    @click="window.location.href = '/auth/google/redirect'"
+                    @click="navigateToSocial('google')"
                 >
                     <svg class="mr-2 h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -154,7 +158,7 @@ import { Github, Linkedin } from 'lucide-vue-next';
                 <Button
                     variant="outline"
                     type="button"
-                    @click="window.location.href = '/auth/linkedin/redirect'"
+                    @click="navigateToSocial('linkedin')"
                 >
                     <Linkedin class="mr-2 h-4 w-4" />
                     LinkedIn

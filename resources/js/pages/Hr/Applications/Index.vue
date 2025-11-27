@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Eye } from 'lucide-vue-next';
+import { ArchiveX, Eye } from 'lucide-vue-next';
 import { ref } from 'vue';
 import hr from '@/routes/hr';
 import positions from '@/routes/positions';
@@ -48,6 +48,7 @@ interface Application {
     status: 'pending' | 'reviewing' | 'accepted' | 'rejected';
     applied_at: string;
     cover_letter: string | null;
+    user_archived: boolean;
 }
 
 interface PaginatedApplications {
@@ -125,6 +126,17 @@ const breadcrumbs = [
         href: hr.applications.index().url,
     },
 ];
+
+const rejectApplication = (applicationId: number) => {
+    const form = useForm({
+        status: 'rejected',
+        _method: 'PATCH',
+    });
+
+    form.post(hr.applications.update(applicationId).url, {
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
@@ -200,12 +212,24 @@ const breadcrumbs = [
                             <TableRow
                                 v-for="application in props.applications.data"
                                 :key="application.id"
+                                :class="{
+                                    'cursor-not-allowed opacity-60': application.user_archived
+                                }"
                             >
                                 <TableCell>
                                     <div class="flex flex-col">
-                                        <span class="font-medium text-gray-900 dark:text-gray-100">
-                                            {{ application.user.name }}
-                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ application.user.name }}
+                                            </span>
+                                            <Badge
+                                                v-if="application.user_archived"
+                                                class="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                            >
+                                                <ArchiveX class="mr-1 h-3 w-3" />
+                                                Archived
+                                            </Badge>
+                                        </div>
                                         <span class="text-sm text-gray-500 dark:text-gray-400">
                                             {{ application.user.email }}
                                         </span>
@@ -236,12 +260,29 @@ const breadcrumbs = [
                                     </span>
                                 </TableCell>
                                 <TableCell class="text-right">
-                                    <Link :href="hr.applications.show(application.id).url">
+                                    <Link
+                                        v-if="!application.user_archived"
+                                        :href="hr.applications.show(application.id).url"
+                                    >
                                         <Button variant="ghost" size="sm">
                                             <Eye class="mr-2 h-4 w-4" />
                                             View
                                         </Button>
                                     </Link>
+                                    <Button
+                                        v-else-if="application.status !== 'rejected'"
+                                        variant="ghost"
+                                        size="sm"
+                                        @click="rejectApplication(application.id)"
+                                    >
+                                        Move to rejected
+                                    </Button>
+                                    <span
+                                        v-else
+                                        class="text-sm text-gray-500 dark:text-gray-400"
+                                    >
+                                        -
+                                    </span>
                                 </TableCell>
                             </TableRow>
                         </TableBody>

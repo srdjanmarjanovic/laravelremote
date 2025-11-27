@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ListingType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -45,7 +46,7 @@ class PositionFactory extends Factory
             'remote_type' => fake()->randomElement(['global', 'timezone', 'country']),
             'location_restriction' => fake()->optional()->country(),
             'status' => $publishedAt ? 'published' : 'draft',
-            'is_featured' => fake()->boolean(20),
+            'listing_type' => ListingType::Regular,
             'is_external' => fake()->boolean(10),
             'external_apply_url' => fake()->boolean(10) ? fake()->url() : null,
             'allow_platform_applications' => fake()->boolean(90),
@@ -74,7 +75,14 @@ class PositionFactory extends Factory
     public function featured(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_featured' => true,
+            'listing_type' => ListingType::Featured,
+        ]);
+    }
+
+    public function top(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'listing_type' => ListingType::Top,
         ]);
     }
 

@@ -50,7 +50,6 @@ class StoreApplicationRequest extends FormRequest
     {
         $position = $this->route('position');
         $rules = [
-            'cover_letter' => ['nullable', 'string', 'max:5000'],
             'custom_answers' => ['nullable', 'array'],
         ];
 
@@ -77,7 +76,6 @@ class StoreApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cover_letter.max' => 'Your cover letter cannot exceed 5000 characters.',
             'custom_answers.*.required' => 'This question is required.',
             'custom_answers.*.max' => 'Your answer cannot exceed 2000 characters.',
         ];

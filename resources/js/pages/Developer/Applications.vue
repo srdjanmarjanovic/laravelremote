@@ -35,7 +35,6 @@ interface Application {
     position: Position;
     status: string;
     applied_at: string;
-    cover_letter?: string;
 }
 
 interface PaginatedApplications {

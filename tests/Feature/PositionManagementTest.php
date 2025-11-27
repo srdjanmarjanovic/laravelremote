@@ -57,7 +57,7 @@ describe('Position Management', function () {
             'salary_max' => 120000,
             'remote_type' => 'global',
             'status' => 'published',
-            'is_featured' => false,
+            'listing_type' => \App\Enums\ListingType::Regular,
             'is_external' => false,
             'allow_platform_applications' => true,
             'technologies' => $technologies->pluck('id')->toArray(),
@@ -158,7 +158,7 @@ describe('Position Management', function () {
         $response->assertRedirect();
         assertDatabaseHas('positions', [
             'id' => $position->id,
-            'is_featured' => true,
+            'listing_type' => \App\Enums\ListingType::Featured->value,
         ]);
     });
 });
@@ -177,7 +177,6 @@ describe('Position Applications', function () {
         actingAs($this->developer);
 
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'I am very interested in this position.',
             'custom_answers' => [],
         ]);
 
@@ -197,7 +196,7 @@ describe('Position Applications', function () {
         ]);
 
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'Another application',
+            'custom_answers' => [],
         ]);
 
         $response->assertForbidden();
@@ -290,6 +289,64 @@ describe('Public Position Browsing', function () {
         $response->assertSuccessful();
         expect($response->viewData('positions'))->toHaveCount(1);
         expect($response->viewData('positions')->first()->seniority)->toBe('senior');
+    });
+
+    it('always displays top positions first regardless of sort order', function () {
+        // Create regular positions first (older published dates)
+        $regular1 = Position::factory()->published()->create([
+            'listing_type' => \App\Enums\ListingType::Regular,
+            'published_at' => now()->subDays(5),
+        ]);
+        $regular2 = Position::factory()->published()->create([
+            'listing_type' => \App\Enums\ListingType::Regular,
+            'published_at' => now()->subDays(3),
+        ]);
+
+        // Create featured positions (newer published dates)
+        $featured1 = Position::factory()->published()->featured()->create([
+            'published_at' => now()->subDays(2),
+        ]);
+        $featured2 = Position::factory()->published()->featured()->create([
+            'published_at' => now()->subDays(1),
+        ]);
+
+        // Create top positions (oldest published dates - should still be first)
+        $top1 = Position::factory()->published()->top()->create([
+            'published_at' => now()->subDays(7),
+        ]);
+        $top2 = Position::factory()->published()->top()->create([
+            'published_at' => now()->subDays(6),
+        ]);
+
+        // Test default sort (by published_at desc)
+        $response = get(route('positions.index'));
+
+        $response->assertSuccessful();
+        $positions = $response->viewData('positions');
+        // Top positions should always be first
+        expect($positions->first()->id)->toBe($top2->id);
+        expect($positions->get(1)->id)->toBe($top1->id);
+        // Then featured positions
+        expect($positions->get(2)->id)->toBe($featured2->id);
+        expect($positions->get(3)->id)->toBe($featured1->id);
+        // Then regular positions
+        expect($positions->get(4)->id)->toBe($regular2->id);
+        expect($positions->get(5)->id)->toBe($regular1->id);
+
+        // Test with different sort order (by published_at asc)
+        $response = get(route('positions.index', ['sort' => 'published_at', 'order' => 'asc']));
+
+        $response->assertSuccessful();
+        $positions = $response->viewData('positions');
+        // Top positions should still be first
+        expect($positions->first()->listing_type)->toBe(\App\Enums\ListingType::Top);
+        expect($positions->get(1)->listing_type)->toBe(\App\Enums\ListingType::Top);
+        // Then featured positions
+        expect($positions->get(2)->listing_type)->toBe(\App\Enums\ListingType::Featured);
+        expect($positions->get(3)->listing_type)->toBe(\App\Enums\ListingType::Featured);
+        // Then regular positions in ascending order
+        expect($positions->get(4)->id)->toBe($regular1->id);
+        expect($positions->get(5)->id)->toBe($regular2->id);
     });
 
     it('tracks position views anonymously', function () {

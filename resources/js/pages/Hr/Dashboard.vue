@@ -189,7 +189,7 @@ const breadcrumbs = [
             </Card>
 
             <!-- Quick Actions -->
-            <div class="grid gap-4 md:grid-cols-3">
+            <div class="grid gap-4 md:grid-cols-4">
                 <Link :href="hr.positions.create().url" view-transaction>
                     <Card class="cursor-pointer transition-colors hover:bg-accent">
                         <CardHeader>
@@ -216,6 +216,16 @@ const breadcrumbs = [
                             <FileText class="mb-2 h-8 w-8" />
                             <CardTitle>Manage Positions</CardTitle>
                             <CardDescription>Edit and update your postings</CardDescription>
+                        </CardHeader>
+                    </Card>
+                </Link>
+
+                <Link :href="hr.company.edit().url">
+                    <Card class="cursor-pointer transition-colors hover:bg-accent">
+                        <CardHeader>
+                            <Building class="mb-2 h-8 w-8" />
+                            <CardTitle>Company Profile</CardTitle>
+                            <CardDescription>Edit your company information</CardDescription>
                         </CardHeader>
                     </Card>
                 </Link>

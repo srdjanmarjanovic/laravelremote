@@ -13,7 +13,6 @@ class Application extends Model
     protected $fillable = [
         'position_id',
         'user_id',
-        'cover_letter',
         'custom_answers',
         'status',
         'reviewed_by_user_id',

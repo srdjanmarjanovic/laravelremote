@@ -228,13 +228,13 @@ describe('Application Submission - Form Submission', function () {
         ]);
     });
 
-    it('allows developers to submit application with cover letter', function () {
+    it('allows developers to submit application', function () {
         $developer = User::factory()->developer()->create();
         DeveloperProfile::factory()->create(['user_id' => $developer->id]);
 
         actingAs($developer);
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'I am very interested in this position because...',
+            'custom_answers' => [],
         ]);
 
         $response->assertRedirect(route('positions.show', $this->position->slug));
@@ -243,7 +243,6 @@ describe('Application Submission - Form Submission', function () {
         assertDatabaseHas('applications', [
             'position_id' => $this->position->id,
             'user_id' => $developer->id,
-            'cover_letter' => 'I am very interested in this position because...',
             'status' => 'pending',
         ]);
     });
@@ -253,7 +252,7 @@ describe('Application Submission - Form Submission', function () {
 
         actingAs($admin);
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'Admin test application',
+            'custom_answers' => [],
         ]);
 
         $response->assertRedirect(route('positions.show', $this->position->slug));
@@ -262,24 +261,6 @@ describe('Application Submission - Form Submission', function () {
             'position_id' => $this->position->id,
             'user_id' => $admin->id,
             'status' => 'pending',
-        ]);
-    });
-
-    it('allows submission without cover letter', function () {
-        $developer = User::factory()->developer()->create();
-        DeveloperProfile::factory()->create(['user_id' => $developer->id]);
-
-        actingAs($developer);
-        $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => '',
-        ]);
-
-        $response->assertRedirect(route('positions.show', $this->position->slug));
-
-        assertDatabaseHas('applications', [
-            'position_id' => $this->position->id,
-            'user_id' => $developer->id,
-            'cover_letter' => null,
         ]);
     });
 
@@ -296,7 +277,6 @@ describe('Application Submission - Form Submission', function () {
 
         actingAs($developer);
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'Test cover letter',
             'custom_answers' => [
                 $requiredQuestion->id => '', // Empty answer to required question
             ],
@@ -325,7 +305,6 @@ describe('Application Submission - Form Submission', function () {
 
         actingAs($developer);
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'Test cover letter',
             'custom_answers' => [
                 $question1->id => 'I want to work here because...',
                 $question2->id => 'I have 5 years of experience...',
@@ -355,7 +334,7 @@ describe('Application Submission - Form Submission', function () {
 
         actingAs($hrUser);
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'Test application',
+            'custom_answers' => [],
         ]);
 
         $response->assertForbidden();
@@ -373,22 +352,10 @@ describe('Application Submission - Form Submission', function () {
 
         actingAs($developer);
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'Second application attempt',
+            'custom_answers' => [],
         ]);
 
         $response->assertForbidden();
-    });
-
-    it('validates cover letter max length', function () {
-        $developer = User::factory()->developer()->create();
-        DeveloperProfile::factory()->create(['user_id' => $developer->id]);
-
-        actingAs($developer);
-        $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => str_repeat('a', 5001), // Exceeds 5000 character limit
-        ]);
-
-        $response->assertSessionHasErrors('cover_letter');
     });
 
     it('validates custom answer max length', function () {
@@ -402,7 +369,6 @@ describe('Application Submission - Form Submission', function () {
 
         actingAs($developer);
         $response = post(route('positions.apply.store', $this->position), [
-            'cover_letter' => 'Test',
             'custom_answers' => [
                 $question->id => str_repeat('a', 2001), // Exceeds 2000 character limit
             ],

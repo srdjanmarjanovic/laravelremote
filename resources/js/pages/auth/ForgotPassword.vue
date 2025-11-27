@@ -32,7 +32,7 @@ defineProps<{
         <div class="space-y-6">
             <Form v-bind="email.form()" v-slot="{ errors, processing }">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Email address <span class="text-red-500">*</span></Label>
                     <Input
                         id="email"
                         type="email"
@@ -58,7 +58,7 @@ defineProps<{
 
             <div class="space-x-1 text-center text-sm text-muted-foreground">
                 <span>Or, return to</span>
-                <TextLink :href="login()">log in</TextLink>
+                <TextLink :href="login()" class="text-primary">log in</TextLink>
             </div>
         </div>
     </AuthLayout>

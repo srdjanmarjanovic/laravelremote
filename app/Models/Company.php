@@ -50,4 +50,13 @@ class Company extends Model
     {
         return $this->hasMany(CompanyInvitation::class);
     }
+
+    /**
+     * Check if the company profile is complete.
+     * A complete profile requires at least a name and description.
+     */
+    public function isComplete(): bool
+    {
+        return ! empty($this->name) && ! empty($this->description);
+    }
 }

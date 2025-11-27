@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ListingType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +16,24 @@ class UpdatePositionRequest extends FormRequest
         $position = $this->route('position');
 
         return $this->user()->canManagePosition($position);
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('custom_questions')) {
+            $questions = $this->input('custom_questions', []);
+            foreach ($questions as $index => $question) {
+                // Normalize is_required to proper boolean
+                $questions[$index]['is_required'] = filter_var(
+                    $question['is_required'] ?? false,
+                    FILTER_VALIDATE_BOOLEAN
+                );
+            }
+            $this->merge(['custom_questions' => $questions]);
+        }
     }
 
     /**
@@ -33,9 +52,18 @@ class UpdatePositionRequest extends FormRequest
             'salary_min' => ['nullable', 'numeric', 'min:0', 'max:9999999.99'],
             'salary_max' => ['nullable', 'numeric', 'min:0', 'max:9999999.99', 'gte:salary_min'],
             'remote_type' => ['required', Rule::in(['global', 'timezone', 'country'])],
-            'location_restriction' => ['nullable', 'string', 'max:255', 'required_if:remote_type,timezone,country'],
+            'location_restriction' => [
+                'nullable',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (in_array($this->input('remote_type'), ['timezone', 'country']) && empty($value)) {
+                        $fail('Location restriction is required when remote type is timezone or country.');
+                    }
+                },
+            ],
             'status' => ['required', Rule::in(['draft', 'published', 'archived'])],
-            'is_featured' => ['boolean'],
+            'listing_type' => ['nullable', Rule::enum(ListingType::class)],
             'is_external' => ['boolean'],
             'external_apply_url' => ['nullable', 'url', 'max:255', 'required_if:is_external,true'],
             'allow_platform_applications' => ['boolean'],
@@ -45,7 +73,7 @@ class UpdatePositionRequest extends FormRequest
             'custom_questions' => ['nullable', 'array', 'max:10'],
             'custom_questions.*.id' => ['nullable', 'exists:custom_questions,id'],
             'custom_questions.*.question_text' => ['required', 'string', 'max:1000'],
-            'custom_questions.*.is_required' => ['boolean'],
+            'custom_questions.*.is_required' => ['nullable', 'boolean'],
             'custom_questions.*.order' => ['nullable', 'integer', 'min:0'],
             'custom_questions.*._destroy' => ['nullable', 'boolean'],
         ];
