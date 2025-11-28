@@ -118,6 +118,14 @@ class PositionPolicy
     }
 
     /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, Position $position): bool
+    {
+        return $user->isAdmin();
+    }
+
+    /**
      * Determine whether the user can restore the model.
      */
     public function restore(User $user, Position $position): bool

@@ -11,7 +11,7 @@ Create comprehensive database schema with migrations, models, factories, and see
 **Core Models:**
 - `Company` - name, slug, logo, description, website, social_links (JSON), created_by_user_id, timestamps
 - `CompanyUser` - pivot for company-user many-to-many with role (owner/admin/member), invited_by, joined_at
-- `Position` - title, slug, short_description, long_description (richtext), company_id, created_by_user_id, seniority, salary_min, salary_max, remote_type (global/timezone/country), location_restriction (nullable), status (draft/published/expired/archived), is_featured, is_external, external_apply_url (nullable), allow_platform_applications, expires_at, published_at, timestamps
+- `Position` - title, slug, short_description, long_description (richtext), company_id, created_by_user_id, seniority, salary_min, salary_max, remote_type (global/timezone/country), location_restriction (nullable), status (draft/published/expired/archived), listing_type (regular/featured/top), is_external, external_apply_url (nullable), allow_platform_applications, expires_at, published_at, paid_at (nullable), timestamps
 - `PositionTechnology` - pivot for position-technology many-to-many
 - `Technology` - name, slug, icon/logo (nullable)
 - `Application` - position_id, user_id, cover_letter (nullable), custom_answers (JSON), status (pending/reviewing/accepted/rejected), reviewed_by_user_id (nullable), applied_at, timestamps
@@ -19,6 +19,7 @@ Create comprehensive database schema with migrations, models, factories, and see
 - `DeveloperProfile` - user_id, summary, cv_path, profile_photo_path, github_url, linkedin_url, portfolio_url, other_links (JSON)
 - `CompanyInvitation` - company_id, email, role, invited_by_user_id, token, accepted_at, expires_at
 - `PositionView` - position_id, ip_address (hashed for privacy), country_code, city (nullable), user_agent, referrer (nullable), viewed_at
+- `Payment` - position_id, user_id, amount, tier (regular/featured/top), type (initial/upgrade), provider (lemon_squeezy/paddle/creem), provider_payment_id, status (pending/completed/failed/refunded), timestamps
 - `Notification` - standard Laravel notifications table
 
 **User Extensions:**
@@ -75,12 +76,13 @@ Files: `app/Policies/{PositionPolicy,CompanyPolicy,ApplicationPolicy}.php`, `app
 - `PositionController` - index (my positions), create, store, edit, update, destroy
 - `StorePositionRequest` & `UpdatePositionRequest` with comprehensive validation
 - Support for adding/removing technologies, custom questions
-- Handle featured status (admin only), expiration dates
+- **Note:** HR cannot control status or expiration dates - these are managed by the payment system (see Section 16)
 
 **Views (Inertia Pages):**
 - `resources/js/pages/hr/positions/Index.vue` - list my posted positions with filters
-- `resources/js/pages/hr/positions/Create.vue` - rich form with RichTextEditor component for long_description
-- `resources/js/pages/hr/positions/Edit.vue` - edit existing position
+- `resources/js/pages/hr/positions/Create.vue` - rich form with RichTextEditor component for long_description (no status/expiration fields)
+- `resources/js/pages/hr/positions/Edit.vue` - edit existing position (no status/expiration fields)
+- `resources/js/pages/hr/positions/Payment.vue` - payment selection after position creation
 - Implement multi-step form or single comprehensive form with sections
 
 **Components:**
@@ -181,10 +183,17 @@ Files: `app/Http/Controllers/ApplicationController.php`, `app/Notifications/{New
 - `resources/js/pages/admin/Dashboard.vue` - platform statistics
 
 **Features:**
-- Feature/unfeature positions (sets is_featured)
-- Extend expiration dates
+- Create positions at **no cost** (bypass payment system entirely)
+- Change listing tiers freely (Regular/Featured/Top) without triggering payment
+- Extend expiration dates on any position
+- Feature/unfeature positions
 - Archive or delete positions
 - View all users, companies, applications
+
+**Position Listing Specifics:**
+- Shows only admin's own draft positions (not other companies' drafts)
+- Shows all published/expired/archived positions from everyone
+- **Expiration date column** visible in the table
 
 Files: `app/Http/Controllers/Admin/{AdminPositionController,AdminDashboardController}.php`, `resources/js/pages/admin/*`
 
@@ -204,6 +213,8 @@ Files: `app/Http/Controllers/Admin/{AdminPositionController,AdminDashboardContro
 - `PositionExpiringNotification` - to HR (7 days before)
 - `PositionExpiredNotification` - to HR
 - `WelcomeNotification` - to new users
+- `PositionPublishedNotification` - to Admin (when HR completes payment)
+- `PositionUpgradedNotification` - to Admin (when HR upgrades tier: Regular→Featured, Regular→Top, Featured→Top)
 
 **In-App Notifications:**
 - Notification bell component in header
@@ -307,19 +318,110 @@ Files: Update `resources/js/composables/useAppearance.ts`, add theme toggle to p
 
 Files: `app/Http/Controllers/SitemapController.php`, `resources/views/layouts/partials/meta.blade.php`, `public/robots.txt`
 
-## 16. Monetization - Featured Listings
+## 16. Paid Position Publishing & Monetization
 
-**Pricing Model:**
-- Free position postings (basic)
-- Featured listings (paid) - more prominent display
+**Pricing Structure:**
 
-**Implementation:**
-- No payment gateway in MVP
-- Admin can manually mark positions as featured
-- Featured positions shown at top of listings with badge
-- Future: integrate Stripe/Paddle for self-service featured upgrades
+| Tier | Price | Duration | Display Priority |
+|------|-------|----------|------------------|
+| Regular | $49 | 30 days | Standard listing |
+| Featured | $99 | 30 days | Highlighted, above regular |
+| Top | $199 | 30 days | Pinned at top, maximum visibility |
 
-Files: Already included in Position model with `is_featured` boolean
+### HR Position Flow
+
+**Creation:**
+- HR creates position → saves as `draft` status
+- HR has **no control** over status or expiration date (system-managed)
+- After creation → presented with payment options (Regular/Featured/Top)
+- After successful payment → position becomes `published`, expiration auto-set to +30 days
+
+**Tier Upgrades:**
+- Can upgrade at any time: Regular→Featured, Regular→Top, Featured→Top
+- **Prorated pricing** based on remaining days
+  - Example: 15 days remaining on Regular ($49), upgrade to Featured ($99)
+  - Prorated cost = ($99 - $49) × (15/30) = $25
+- **No downgrades allowed** - Featured cannot go to Regular, Top cannot be demoted
+
+### Admin Position Flow
+
+**Privileges:**
+- Create positions at **no cost** (bypass payment entirely)
+- Change tiers freely without triggering payment mechanisms
+- Extend expiration dates on any position
+- Edit any aspect of any position
+
+**Position Listing View:**
+- Shows only admin's own draft positions (not other companies' drafts)
+- Shows all published/expired/archived positions from everyone
+- **Expiration date column** visible in the table
+
+### Admin Notifications (Payment Events)
+
+Admin is notified when:
+- New position is published (payment completed by HR)
+- Position upgraded: Regular → Featured
+- Position upgraded: Regular → Top
+- Position upgraded: Featured → Top
+
+### Database Changes
+
+**Positions table additions:**
+- `paid_at` - timestamp when payment was completed
+- `payment_id` / `transaction_id` - reference to payment provider
+
+**New `payments` table:**
+```
+- id
+- position_id - foreign key
+- user_id - who made the payment
+- amount - decimal, amount paid
+- tier - what tier was purchased (regular/featured/top)
+- type - enum: initial, upgrade
+- provider - lemon_squeezy, paddle, creem
+- provider_payment_id - external reference
+- status - pending, completed, failed, refunded
+- created_at, updated_at
+```
+
+### Payment Integration
+
+**Preferred providers (TBD):**
+- Lemon Squeezy
+- Paddle
+- Creem.io
+
+**Provider-agnostic design:**
+- `PaymentProviderInterface` with methods:
+  - `createCheckout(Position $position, string $tier): CheckoutSession`
+  - `handleWebhook(Request $request): WebhookResult`
+  - `getPaymentStatus(string $paymentId): PaymentStatus`
+  - `calculateUpgradePrice(Position $position, string $newTier): float`
+- Concrete implementations: `LemonSqueezyProvider`, `PaddleProvider`, `CreemProvider`
+- Config-driven provider selection via `config/payments.php`
+- Easy to swap providers without code changes
+
+### Implementation Files
+
+**Backend:**
+- `app/Services/Payment/PaymentProviderInterface.php`
+- `app/Services/Payment/LemonSqueezyProvider.php` (or Paddle/Creem)
+- `app/Services/Payment/PositionPaymentService.php` - prorated pricing logic
+- `app/Http/Controllers/PaymentController.php` - checkout, webhooks
+- `app/Models/Payment.php`
+- `database/migrations/*_create_payments_table.php`
+- `database/migrations/*_add_payment_fields_to_positions_table.php`
+
+**Frontend:**
+- Update `Hr/Positions/Create.vue` - remove status/expiration fields
+- Update `Hr/Positions/Edit.vue` - remove status/expiration fields
+- Create `Hr/Positions/Payment.vue` - payment selection after creation
+- Add "Upgrade Tier" button to `Hr/Positions/Show.vue`
+- Update `Admin/Positions/Index.vue` - add expiration column, filter drafts
+
+**Notifications:**
+- `app/Notifications/PositionPublishedNotification.php` - to admin
+- `app/Notifications/PositionUpgradedNotification.php` - to admin
 
 ## 17. Email Templates
 
@@ -426,8 +528,9 @@ The todos below follow a logical order for building the platform:
 3. Core features (position posting, browsing, applications)
 4. Role-specific dashboards
 5. Admin tools
-6. Notifications and polish
-7. Testing throughout
+6. **Payment system & monetization** (Section 16)
+7. Notifications and polish
+8. Testing throughout
 
 ## Important Notes
 
@@ -437,4 +540,7 @@ The todos below follow a logical order for building the platform:
 - **Analytics**: Track position views with country, referrer, and user agent data
 - **Dark Mode**: Full support across all pages (public and private)
 - **Responsive**: Mobile-first design using Tailwind CSS v4
+- **Payment-Gated Publishing**: Positions require payment to become public; HR cannot control status/expiration directly
+- **Tier System**: Regular ($49), Featured ($99), Top ($199) - all for 30 days; upgrades are prorated, no downgrades
+- **Payment Providers**: Designed to support Lemon Squeezy, Paddle, or Creem.io with provider-agnostic interface
 

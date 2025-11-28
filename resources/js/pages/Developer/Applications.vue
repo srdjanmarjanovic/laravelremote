@@ -152,7 +152,7 @@ const breadcrumbs = [
                                             <MapPin class="h-3 w-3" />
                                             {{
                                                 application.position.remote_type === 'global'
-                                                    ? 'Worldwide'
+                                                    ? 'Global'
                                                     : application.position.location_restriction
                                             }}
                                         </span>

@@ -90,7 +90,7 @@ use App\Enums\ListingType;
                                     @if ($position->remote_type !== 'global' )
                                         {{ $position->location_restriction }}
                                     @else
-                                        <strong>Worldwide</strong>
+                                        <strong>Global</strong>
                                     @endif
                                 </span>
 
@@ -104,7 +104,7 @@ use App\Enums\ListingType;
                                 @endif
 
                                 @if($position->published_at)
-                                    <span class="text-muted-foreground">
+                                    <span class="text-muted-foreground" title="Published on {{ $position->published_at->format('M d, Y \a\t g:i A T') }}">
                                         Posted {{ $position->published_at->diffForHumans() }}
                                     </span>
                                 @else

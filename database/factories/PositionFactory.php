@@ -93,4 +93,12 @@ class PositionFactory extends Factory
             'expires_at' => now()->subDays(fake()->numberBetween(1, 30)),
         ]);
     }
+
+    public function archived(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'archived',
+            'published_at' => now()->subDays(fake()->numberBetween(30, 60)),
+        ]);
+    }
 }

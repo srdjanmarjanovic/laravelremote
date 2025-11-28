@@ -64,7 +64,7 @@ use App\Enums\ListingType;
                                     @if ($position->remote_type !== 'global' )
                                         {{ $position->location_restriction }}
                                     @else
-                                        <strong>Worldwide</strong>
+                                        <strong>Global</strong>
                                     @endif
                                 </span>
 
@@ -77,7 +77,7 @@ use App\Enums\ListingType;
                                     </span>
                                 @endif
 
-                                <span class="text-muted-foreground">
+                                <span class="text-muted-foreground" title="Published on {{ $position->published_at->format('M d, Y \a\t g:i A T') }}">
                                     Posted {{ $position->published_at->diffForHumans() }}
                                 </span>
                             </div>
@@ -234,23 +234,6 @@ use App\Enums\ListingType;
                             @endif
                         </div>
                     @endif
-                </div>
-
-                <!-- Position Stats -->
-                <div class="bg-card rounded-lg shadow p-6 border border-border transition-colors duration-300">
-                    <h3 class="text-lg font-bold text-foreground mb-4">Position Stats</h3>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-muted-foreground">Applications:</span>
-                            <span class="font-medium text-foreground">{{ $position->applications_count }}</span>
-                        </div>
-                        @if($position->expires_at)
-                            <div class="flex justify-between">
-                                <span class="text-muted-foreground">Expires:</span>
-                                <span class="font-medium text-foreground">{{ $position->expires_at->format('M d, Y') }}</span>
-                            </div>
-                        @endif
-                    </div>
                 </div>
 
                 <!-- Share -->
