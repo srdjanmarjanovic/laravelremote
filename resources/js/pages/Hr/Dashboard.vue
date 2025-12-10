@@ -63,7 +63,55 @@ const breadcrumbs = [
                 </Link>
             </div>
 
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Link :href="hr.positions.create().url" view-transaction>
+                    <Card class="cursor-pointer transition-colors hover:bg-accent">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <Briefcase class="h-4 w-4" />
+                                Post Position
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                </Link>
+
+                <Link :href="hr.applications.index().url">
+                    <Card class="cursor-pointer transition-colors hover:bg-accent">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <Users class="h-4 w-4" />
+                                View Applications
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                </Link>
+
+                <Link :href="hr.positions.index().url">
+                    <Card class="cursor-pointer transition-colors hover:bg-accent">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <FileText class="h-4 w-4" />
+                                Manage Positions
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                </Link>
+
+                <Link :href="hr.company.edit().url">
+                    <Card class="cursor-pointer transition-colors hover:bg-accent">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <Building class="h-4 w-4" />
+                                Company Profile
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
+                </Link>
+            </div>
+
             <!-- Stats Grid -->
+            <!--
             <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
                 <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -125,6 +173,7 @@ const breadcrumbs = [
                     </CardContent>
                 </Card>
             </div>
+            -->
 
             <!-- Recent Positions -->
             <Card>
@@ -145,7 +194,7 @@ const breadcrumbs = [
                             v-for="position in positions"
                             :key="position.id"
                             :href="hr.positions.show(position.id).url"
-                            class="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                            class="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
                         >
                             <div class="space-y-1">
                                 <p class="font-medium">
@@ -181,55 +230,12 @@ const breadcrumbs = [
                     <div v-else class="py-8 text-center text-muted-foreground">
                         <Briefcase class="mx-auto mb-2 h-8 w-8" />
                         <p>No positions yet</p>
-                        <Link :href="hr.positions.create().url" class="mt-2">
-                            <Button variant="link">Create Your First Position</Button>
+                        <Link :href="hr.positions.create().url" class="mt-2 text-foreground">
+                            <Button variant="link" class="text-foreground">Create Your First Position</Button>
                         </Link>
                     </div>
                 </CardContent>
             </Card>
-
-            <!-- Quick Actions -->
-            <div class="grid gap-4 md:grid-cols-4">
-                <Link :href="hr.positions.create().url" view-transaction>
-                    <Card class="cursor-pointer transition-colors hover:bg-accent">
-                        <CardHeader>
-                            <Briefcase class="mb-2 h-8 w-8" />
-                            <CardTitle>Post Position</CardTitle>
-                            <CardDescription>Create a new job posting</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </Link>
-
-                <Link :href="hr.applications.index().url">
-                    <Card class="cursor-pointer transition-colors hover:bg-accent">
-                        <CardHeader>
-                            <Users class="mb-2 h-8 w-8" />
-                            <CardTitle>View Applications</CardTitle>
-                            <CardDescription>Review candidate applications</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </Link>
-
-                <Link :href="hr.positions.index().url">
-                    <Card class="cursor-pointer transition-colors hover:bg-accent">
-                        <CardHeader>
-                            <FileText class="mb-2 h-8 w-8" />
-                            <CardTitle>Manage Positions</CardTitle>
-                            <CardDescription>Edit and update your postings</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </Link>
-
-                <Link :href="hr.company.edit().url">
-                    <Card class="cursor-pointer transition-colors hover:bg-accent">
-                        <CardHeader>
-                            <Building class="mb-2 h-8 w-8" />
-                            <CardTitle>Company Profile</CardTitle>
-                            <CardDescription>Edit your company information</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </Link>
-            </div>
         </div>
     </AppLayout>
 </template>

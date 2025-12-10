@@ -99,7 +99,7 @@ const clearFilters = () => {
 const getStatusColor = (status: string) => {
     const colors = {
         pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-        reviewing: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        reviewing: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
         accepted: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
         rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     };
@@ -146,7 +146,7 @@ const rejectApplication = (applicationId: number) => {
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
             <h1 class="text-2xl font-bold">Job Applications</h1>
                 <!-- Filters -->
-                <div class="mb-6 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+                <div class="mb-6 rounded-lg bg-white p-6 shadow dark:bg-card">
                     <div class="grid gap-4 md:grid-cols-4">
                         <Input
                             v-model="search"
@@ -188,7 +188,7 @@ const rejectApplication = (applicationId: number) => {
                 </div>
 
                 <!-- Applications Table -->
-                <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -239,7 +239,7 @@ const rejectApplication = (applicationId: number) => {
                                     <Link
                                         :href="positions.show(application.position.slug).url"
                                         target="_blank"
-                                        class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400"
+                                        class="font-medium hover:underline"
                                     >
                                         {{ application.position.title }}
                                     </Link>
@@ -291,7 +291,7 @@ const rejectApplication = (applicationId: number) => {
                     <!-- Pagination -->
                     <div
                         v-if="props.applications.last_page > 1"
-                        class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6"
+                        class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-card sm:px-6"
                     >
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Button

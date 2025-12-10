@@ -25,6 +25,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, MoreVertical, Eye, Edit, Archive, ExternalLink } from 'lucide-vue-next';
 import { ref } from 'vue';
 import hr from '@/routes/hr';
@@ -81,6 +91,10 @@ const search = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || 'all');
 const companyFilter = ref(props.filters.company_id?.toString() || 'all');
 
+// Archive position dialog
+const showArchiveDialog = ref(false);
+const positionToArchive = ref<Position | null>(null);
+
 const applyFilters = () => {
     router.get(
         hr.positions.index().url,
@@ -104,19 +118,31 @@ const clearFilters = () => {
 };
 
 const archivePosition = (position: Position) => {
-    if (confirm(`Are you sure you want to archive "${position.title}"? Archived positions will no longer be visible to candidates.`)) {
-        router.post(hr.positions.archive(position.id).url, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Position archived successfully!');
-            },
-        });
+    positionToArchive.value = position;
+    showArchiveDialog.value = true;
+};
+
+const performArchive = () => {
+    if (!positionToArchive.value) {
+        return;
     }
+
+    router.post(hr.positions.archive(positionToArchive.value.id).url, {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Position archived successfully!');
+            showArchiveDialog.value = false;
+            positionToArchive.value = null;
+        },
+        onError: () => {
+            toast.error('Failed to archive position');
+        },
+    });
 };
 
 const getStatusColor = (status: string) => {
     const colors = {
-        draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+        draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
         published: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
         expired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
         archived: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
@@ -160,7 +186,7 @@ const breadcrumbs = [
                 </Link>
             </div>
                 <!-- Filters -->
-                <div class="mb-6 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+                <div class="mb-6 rounded-lg bg-white p-6 shadow dark:bg-card">
                     <div class="grid gap-4 md:grid-cols-4">
                         <Input
                             v-model="search"
@@ -202,7 +228,7 @@ const breadcrumbs = [
                 </div>
 
                 <!-- Positions Table -->
-                <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -225,7 +251,7 @@ const breadcrumbs = [
                                     No positions found. Create your first position to get started!
                                 </TableCell>
                             </TableRow>
-                            <TableRow v-for="position in props.positions.data" :key="position.id" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800" @click="router.visit(hr.positions.show(position.id).url)">
+                            <TableRow v-for="position in props.positions.data" :key="position.id" class="cursor-pointer text-foreground hover:bg-muted/50" @click="router.visit(hr.positions.show(position.id).url)">
                                 <TableCell>
                                     <div class="flex flex-col">
                                         <span class="font-medium text-gray-900 dark:text-gray-100">
@@ -333,7 +359,7 @@ const breadcrumbs = [
                                             <DropdownMenuItem as-child>
                                                 <Link
                                                     :href="hr.positions.show(position.id).url"
-                                                    class="flex cursor-pointer items-center"
+                                                    class="flex cursor-pointer items-center text-foreground"
                                                 >
                                                     <Eye class="mr-2 h-4 w-4" />
                                                     View Details
@@ -342,7 +368,7 @@ const breadcrumbs = [
                                             <DropdownMenuItem as-child>
                                                 <Link
                                                     :href="hr.positions.edit(position.id).url"
-                                                    class="flex cursor-pointer items-center"
+                                                    class="flex cursor-pointer items-center text-foreground"
                                                 >
                                                     <Edit class="mr-2 h-4 w-4" />
                                                     Edit
@@ -366,7 +392,7 @@ const breadcrumbs = [
                     <!-- Pagination -->
                     <div
                         v-if="props.positions.last_page > 1"
-                        class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6"
+                        class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-card sm:px-6"
                     >
                         <div class="flex flex-1 justify-between sm:hidden">
                             <Button
@@ -428,6 +454,27 @@ const breadcrumbs = [
                     </div>
                 </div>
             </div>
+
+        <!-- Archive Position Confirmation Dialog -->
+        <AlertDialog v-model:open="showArchiveDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Archive Position?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to archive "{{ positionToArchive?.title }}"? Archived positions will no longer be visible to candidates.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        class="bg-destructive hover:bg-destructive/90"
+                        @click.prevent="performArchive"
+                    >
+                        Archive Position
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </AppLayout>
 </template>
 

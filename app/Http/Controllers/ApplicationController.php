@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreApplicationRequest;
 use App\Models\Position;
+use App\Notifications\NewApplicationNotification;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,7 +70,14 @@ class ApplicationController extends Controller
             'applied_at' => now(),
         ]);
 
-        // TODO: Send notification to HR about new application
+        // Send notification to HR team members about new application
+        $application->load(['position.company', 'user']);
+        $position->load('company.users');
+        $hrUsers = $position->company->users()->where('role', 'hr')->get();
+
+        if ($hrUsers->isNotEmpty()) {
+            Notification::send($hrUsers, new NewApplicationNotification($application));
+        }
 
         return redirect()->route('positions.show', $position->slug)
             ->with('message', 'Your application has been submitted successfully!');

@@ -38,7 +38,12 @@ class PositionPolicy
      */
     public function create(User $user): bool
     {
-        // Only HR users with at least one company can create positions
+        // Admins can create positions at no cost
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // HR users with at least one company can create positions
         return $user->isHR() && $user->companies()->exists();
     }
 

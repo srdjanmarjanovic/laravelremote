@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/payment',
+        ]);
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'profile.complete' => EnsureProfileComplete::class,

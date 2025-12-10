@@ -41,12 +41,10 @@ interface Position {
     salary_max: number | null;
     remote_type: string;
     location_restriction: string | null;
-    status: string;
     listing_type: string;
     is_external: boolean;
     external_apply_url: string | null;
     allow_platform_applications: boolean;
-    expires_at: string | null;
     technologies: Technology[];
     custom_questions: CustomQuestion[];
 }
@@ -67,12 +65,10 @@ const form = useForm({
     salary_max: props.position.salary_max,
     remote_type: props.position.remote_type,
     location_restriction: props.position.location_restriction || '',
-    status: props.position.status,
     listing_type: props.position.listing_type,
     is_external: props.position.is_external,
     external_apply_url: props.position.external_apply_url || '',
     allow_platform_applications: props.position.allow_platform_applications,
-    expires_at: props.position.expires_at ? props.position.expires_at.split('T')[0] : '',
     technology_ids: props.position.technologies.map((t) => t.id),
     custom_questions: props.position.custom_questions.map((q) => ({
         id: q.id,
@@ -210,7 +206,7 @@ const breadcrumbs = [
                                                     type="radio"
                                                     :checked="!form.is_external"
                                                     @change="form.is_external = false; form.external_apply_url = ''; form.allow_platform_applications = true"
-                                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-gray-800"
+                                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-background"
                                                 />
                                                 <Label for="platform_application" class="cursor-pointer font-normal">
                                                     Platform applications
@@ -223,7 +219,7 @@ const breadcrumbs = [
                                                     type="radio"
                                                     :checked="form.is_external"
                                                     @change="form.is_external = true; form.allow_platform_applications = false"
-                                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-gray-800"
+                                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-gray-600 dark:bg-background"
                                                 />
                                                 <Label for="external_application" class="cursor-pointer font-normal">
                                                     External application
@@ -276,44 +272,6 @@ const breadcrumbs = [
 
                     <!-- Sidebar - 1/4 width -->
                     <div class="space-y-6 lg:col-span-1">
-                        <!-- Status Section -->
-                        <Card>
-                            <CardHeader>
-                                <CardTitle class="text-base">Status</CardTitle>
-                            </CardHeader>
-                            <CardContent class="space-y-4">
-                                <div class="space-y-2">
-                                    <Label for="status">Publication Status <span class="text-red-500">*</span></Label>
-                                    <Select v-model="form.status">
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="draft">Draft</SelectItem>
-                                            <SelectItem value="published">Published</SelectItem>
-                                            <SelectItem value="expired">Expired</SelectItem>
-                                            <SelectItem value="archived">Archived</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <p v-if="form.errors.status" class="text-sm text-red-500">
-                                        {{ form.errors.status }}
-                                    </p>
-                                </div>
-
-                                <div class="space-y-2">
-                                    <Label for="expires_at">Expiration Date <span class="text-red-500">*</span></Label>
-                                    <Input
-                                        id="expires_at"
-                                        v-model="form.expires_at"
-                                        type="date"
-                                    />
-                                    <p v-if="form.errors.expires_at" class="text-sm text-red-500">
-                                        {{ form.errors.expires_at }}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
                         <!-- Location Section -->
                         <Card>
                             <CardHeader>

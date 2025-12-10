@@ -7,6 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { FileText, Upload, X, Download, Github, Linkedin, Globe, AlertCircle } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
@@ -30,6 +40,8 @@ const props = defineProps<{
 
 const cvInput = ref<HTMLInputElement | null>(null);
 const photoInput = ref<HTMLInputElement | null>(null);
+const showDeleteCvDialog = ref(false);
+const showDeletePhotoDialog = ref(false);
 
 const form = useForm({
     summary: props.profile.summary || '',
@@ -98,25 +110,37 @@ const downloadCv = () => {
 };
 
 const deleteCv = () => {
-    if (confirm('Are you sure you want to delete your CV?')) {
-        router.delete(developer.profile.cv.delete().url, {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('CV deleted successfully!');
-            },
-        });
-    }
+    showDeleteCvDialog.value = true;
+};
+
+const performDeleteCv = () => {
+    router.delete(developer.profile.cv.delete().url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('CV deleted successfully!');
+            showDeleteCvDialog.value = false;
+        },
+        onError: () => {
+            toast.error('Failed to delete CV');
+        },
+    });
 };
 
 const deletePhoto = () => {
-    if (confirm('Are you sure you want to delete your profile photo?')) {
-        router.delete(developer.profile.photo.delete().url, {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Profile photo deleted successfully!');
-            },
-        });
-    }
+    showDeletePhotoDialog.value = true;
+};
+
+const performDeletePhoto = () => {
+    router.delete(developer.profile.photo.delete().url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Profile photo deleted successfully!');
+            showDeletePhotoDialog.value = false;
+        },
+        onError: () => {
+            toast.error('Failed to delete profile photo');
+        },
+    });
 };
 
 const breadcrumbs = [
@@ -358,6 +382,48 @@ const breadcrumbs = [
                 </div>
             </form>
         </div>
+
+        <!-- Delete CV Confirmation Dialog -->
+        <AlertDialog v-model:open="showDeleteCvDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete CV?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to delete your CV? This action cannot be undone. You will need to upload a new CV to apply for positions.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        class="bg-destructive hover:bg-destructive/90"
+                        @click.prevent="performDeleteCv"
+                    >
+                        Delete CV
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <!-- Delete Profile Photo Confirmation Dialog -->
+        <AlertDialog v-model:open="showDeletePhotoDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Profile Photo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to delete your profile photo? This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        class="bg-destructive hover:bg-destructive/90"
+                        @click.prevent="performDeletePhoto"
+                    >
+                        Delete Photo
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </AppLayout>
 </template>
 

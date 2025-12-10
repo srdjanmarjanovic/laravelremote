@@ -15,10 +15,9 @@ import { dashboard } from '@/routes';
 import hr from '@/routes/hr';
 import developer from '@/routes/developer';
 import admin from '@/routes/admin';
-import settings from '@/routes/profile';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Briefcase, Users, FileText, Settings as SettingsIcon } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Briefcase, Users, FileText, Building2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -71,14 +70,24 @@ const mainNavItems = computed((): NavItem[] => {
     if (user.value?.role === 'admin') {
         items.push(
             {
-                title: 'Manage Positions',
+                title: 'Positions',
                 href: admin.positions.index().url,
                 icon: Briefcase,
             },
             {
-                title: 'Settings',
-                href: settings.edit().url,
-                icon: SettingsIcon,
+                title: 'Users',
+                href: admin.users.index().url,
+                icon: Users,
+            },
+            {
+                title: 'Companies',
+                href: admin.companies.index().url,
+                icon: Building2,
+            },
+            {
+                title: 'Applications',
+                href: admin.applications.index().url,
+                icon: FileText,
             }
         );
     }

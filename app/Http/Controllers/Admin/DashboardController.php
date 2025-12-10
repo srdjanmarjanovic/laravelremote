@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Company;
+use App\Models\Payment;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,6 +20,27 @@ class DashboardController extends Controller
      */
     public function __invoke(Request $request): Response
     {
+        // Payment statistics
+        $totalRevenue = Payment::where('status', PaymentStatus::Completed)->sum('amount');
+        $pendingPayments = Payment::where('status', PaymentStatus::Pending)->sum('amount');
+        $failedPayments = Payment::where('status', PaymentStatus::Failed)->sum('amount');
+        $refundedPayments = Payment::where('status', PaymentStatus::Refunded)->sum('amount');
+        $totalPayments = Payment::count();
+        $completedPayments = Payment::where('status', PaymentStatus::Completed)->count();
+
+        // Monthly revenue (last 6 months) - database agnostic approach
+        $monthlyRevenue = Payment::where('status', PaymentStatus::Completed)
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->get()
+            ->groupBy(fn ($payment) => $payment->created_at->format('Y-m'))
+            ->map(fn ($payments) => $payments->sum('amount'))
+            ->sortKeys();
+
+        // Payment stats by status
+        $paymentsByStatus = Payment::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
         // Statistics
         $stats = [
             'total_positions' => Position::count(),
@@ -32,6 +55,12 @@ class DashboardController extends Controller
             'total_companies' => Company::count(),
             'total_developers' => User::where('role', 'developer')->count(),
             'total_hrs' => User::where('role', 'hr')->count(),
+            'total_revenue' => (float) $totalRevenue,
+            'pending_payments' => (float) $pendingPayments,
+            'failed_payments' => (float) $failedPayments,
+            'refunded_payments' => (float) $refundedPayments,
+            'total_payments' => $totalPayments,
+            'completed_payments' => $completedPayments,
         ];
 
         // Recent positions
@@ -63,6 +92,8 @@ class DashboardController extends Controller
             'recentApplications' => $recentApplications,
             'positionsByStatus' => $positionsByStatus,
             'applicationsByStatus' => $applicationsByStatus,
+            'paymentsByStatus' => $paymentsByStatus,
+            'monthlyRevenue' => $monthlyRevenue,
         ]);
     }
 }

@@ -12,7 +12,6 @@ import {
     TableRow,
 } from '@/components/ui/table/index';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,6 +20,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -45,13 +45,15 @@ import {
     ExternalLink,
     Star,
     StarOff,
-    Trash2,
-    ChevronDown,
     Search,
     X,
     Building2,
+    Briefcase,
+    Edit,
+    Calendar,
+    Sparkles,
 } from 'lucide-vue-next';
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import admin from '@/routes/admin';
 import positions from '@/routes/positions';
 import { toast } from 'vue-sonner';
@@ -113,51 +115,19 @@ const props = defineProps<{
 const search = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || 'all');
 
-// Selection state
-const selectedPositions = ref<number[]>([]);
-const selectAll = ref(false);
+// Archive position dialog
+const showArchiveDialog = ref(false);
+const positionToArchive = ref<Position | null>(null);
 
-// Bulk action dialog
-const showBulkDialog = ref(false);
-const bulkAction = ref<'feature' | 'unfeature' | 'archive' | 'delete' | null>(null);
-const isProcessing = ref(false);
+// Tier update dialog
+const showTierDialog = ref(false);
+const positionToUpdateTier = ref<Position | null>(null);
+const newTier = ref<string>('regular');
 
-const allSelected = computed(() => {
-    return props.positions.data.length > 0 && 
-           selectedPositions.value.length === props.positions.data.length;
-});
-
-const someSelected = computed(() => {
-    return selectedPositions.value.length > 0 && 
-           selectedPositions.value.length < props.positions.data.length;
-});
-
-watch(selectAll, (value) => {
-    if (value) {
-        selectedPositions.value = props.positions.data.map(p => p.id);
-    } else if (allSelected.value) {
-        selectedPositions.value = [];
-    }
-});
-
-const toggleSelectAll = () => {
-    if (allSelected.value) {
-        selectedPositions.value = [];
-        selectAll.value = false;
-    } else {
-        selectedPositions.value = props.positions.data.map(p => p.id);
-        selectAll.value = true;
-    }
-};
-
-const togglePosition = (id: number) => {
-    const index = selectedPositions.value.indexOf(id);
-    if (index > -1) {
-        selectedPositions.value.splice(index, 1);
-    } else {
-        selectedPositions.value.push(id);
-    }
-};
+// Extend expiration dialog
+const showExtendDialog = ref(false);
+const positionToExtend = ref<Position | null>(null);
+const extendDays = ref<number>(30);
 
 const applyFilters = () => {
     router.get(
@@ -198,68 +168,78 @@ const featurePosition = (position: Position) => {
 };
 
 const archivePosition = (position: Position) => {
-    if (confirm(`Are you sure you want to archive "${position.title}"?`)) {
-        router.post(admin.positions.archive(position.id).url, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Position archived successfully!');
-            },
-            onError: () => {
-                toast.error('Failed to archive position');
-            },
-        });
+    positionToArchive.value = position;
+    showArchiveDialog.value = true;
+};
+
+const performArchive = () => {
+    if (!positionToArchive.value) {
+        return;
     }
-};
 
-// Bulk actions
-const openBulkDialog = (action: 'feature' | 'unfeature' | 'archive' | 'delete') => {
-    bulkAction.value = action;
-    showBulkDialog.value = true;
-};
-
-const executeBulkAction = () => {
-    if (!bulkAction.value || selectedPositions.value.length === 0) return;
-
-    isProcessing.value = true;
-    router.post(admin.positions.bulkAction().url, {
-        action: bulkAction.value,
-        position_ids: selectedPositions.value,
-    }, {
+    router.post(admin.positions.archive(positionToArchive.value.id).url, {}, {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success(`Successfully ${bulkAction.value}d ${selectedPositions.value.length} position(s)`);
-            selectedPositions.value = [];
-            selectAll.value = false;
-            showBulkDialog.value = false;
+            toast.success('Position archived successfully!');
+            showArchiveDialog.value = false;
+            positionToArchive.value = null;
         },
         onError: () => {
-            toast.error(`Failed to ${bulkAction.value} positions`);
-        },
-        onFinish: () => {
-            isProcessing.value = false;
+            toast.error('Failed to archive position');
         },
     });
 };
 
-const getBulkActionTitle = () => {
-    const titles: Record<string, string> = {
-        feature: 'Feature Positions',
-        unfeature: 'Unfeature Positions',
-        archive: 'Archive Positions',
-        delete: 'Delete Positions',
-    };
-    return titles[bulkAction.value || ''] || 'Confirm Action';
+const updateTier = (position: Position) => {
+    positionToUpdateTier.value = position;
+    newTier.value = position.listing_type;
+    showTierDialog.value = true;
 };
 
-const getBulkActionDescription = () => {
-    const count = selectedPositions.value.length;
-    const descriptions: Record<string, string> = {
-        feature: `Are you sure you want to feature ${count} position(s)? Featured positions will be displayed prominently.`,
-        unfeature: `Are you sure you want to unfeature ${count} position(s)? They will return to regular listings.`,
-        archive: `Are you sure you want to archive ${count} position(s)? Archived positions will no longer be visible to candidates.`,
-        delete: `Are you sure you want to permanently delete ${count} position(s)? This action cannot be undone.`,
-    };
-    return descriptions[bulkAction.value || ''] || '';
+const performTierUpdate = () => {
+    if (!positionToUpdateTier.value) {
+        return;
+    }
+
+    router.post(admin.positions.tier(positionToUpdateTier.value.id).url, {
+        listing_type: newTier.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Position tier updated successfully!');
+            showTierDialog.value = false;
+            positionToUpdateTier.value = null;
+        },
+        onError: () => {
+            toast.error('Failed to update position tier');
+        },
+    });
+};
+
+const extendExpiration = (position: Position) => {
+    positionToExtend.value = position;
+    extendDays.value = 30;
+    showExtendDialog.value = true;
+};
+
+const performExtendExpiration = () => {
+    if (!positionToExtend.value) {
+        return;
+    }
+
+    router.post(admin.positions.extendExpiration(positionToExtend.value.id).url, {
+        days: extendDays.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success(`Position expiration extended by ${extendDays.value} days!`);
+            showExtendDialog.value = false;
+            positionToExtend.value = null;
+        },
+        onError: () => {
+            toast.error('Failed to extend expiration');
+        },
+    });
 };
 
 const getStatusColor = (status: string) => {
@@ -305,6 +285,12 @@ const breadcrumbs = [
                         {{ props.positions.total }} total positions on the platform
                     </p>
                 </div>
+                <Link :href="admin.positions.create().url">
+                    <Button>
+                        <Briefcase class="mr-2 h-4 w-4" />
+                        Create Position
+                    </Button>
+                </Link>
             </div>
 
             <!-- Filters -->
@@ -354,75 +340,19 @@ const breadcrumbs = [
                 </CardContent>
             </Card>
 
-            <!-- Bulk Actions Bar -->
-            <div 
-                v-if="selectedPositions.length > 0" 
-                class="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-3"
-            >
-                <span class="text-sm font-medium">
-                    {{ selectedPositions.length }} position(s) selected
-                </span>
-                <div class="flex items-center gap-2">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button variant="outline" size="sm">
-                                Bulk Actions
-                                <ChevronDown class="ml-2 h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem @click="openBulkDialog('feature')">
-                                <Star class="mr-2 h-4 w-4" />
-                                Feature Selected
-                            </DropdownMenuItem>
-                            <DropdownMenuItem @click="openBulkDialog('unfeature')">
-                                <StarOff class="mr-2 h-4 w-4" />
-                                Unfeature Selected
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem @click="openBulkDialog('archive')">
-                                <Archive class="mr-2 h-4 w-4" />
-                                Archive Selected
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                                class="text-destructive focus:text-destructive" 
-                                @click="openBulkDialog('delete')"
-                            >
-                                <Trash2 class="mr-2 h-4 w-4" />
-                                Delete Selected
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        @click="selectedPositions = []; selectAll = false"
-                    >
-                        Clear Selection
-                    </Button>
-                </div>
-            </div>
-
             <!-- Positions Table -->
             <Card>
                 <CardContent class="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead class="w-12">
-                                    <Checkbox 
-                                        :checked="allSelected" 
-                                        :indeterminate="someSelected"
-                                        @update:checked="toggleSelectAll" 
-                                    />
-                                </TableHead>
                                 <TableHead>Position</TableHead>
                                 <TableHead>Company</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Creator</TableHead>
                                 <TableHead class="text-center">Applications</TableHead>
                                 <TableHead>Created</TableHead>
+                                <TableHead>Expiration</TableHead>
                                 <TableHead class="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -444,12 +374,6 @@ const breadcrumbs = [
                                 :key="position.id"
                                 class="group"
                             >
-                                <TableCell>
-                                    <Checkbox 
-                                        :checked="selectedPositions.includes(position.id)"
-                                        @update:checked="togglePosition(position.id)" 
-                                    />
-                                </TableCell>
                                 <TableCell>
                                     <div class="flex flex-col">
                                         <span class="font-medium">{{ position.title }}</span>
@@ -513,6 +437,11 @@ const breadcrumbs = [
                                         {{ formatDate(position.created_at) }}
                                     </span>
                                 </TableCell>
+                                <TableCell>
+                                    <span class="text-sm text-muted-foreground">
+                                        {{ formatDate(position.expires_at) }}
+                                    </span>
+                                </TableCell>
                                 <TableCell class="text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
@@ -525,6 +454,16 @@ const breadcrumbs = [
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
+                                            <DropdownMenuItem as-child>
+                                                <Link
+                                                    :href="admin.positions.edit(position.id).url"
+                                                    class="flex cursor-pointer items-center"
+                                                >
+                                                    <Edit class="mr-2 h-4 w-4" />
+                                                    Edit Position
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem 
                                                 v-if="position.status === 'published'"
                                                 as-child
@@ -550,6 +489,15 @@ const breadcrumbs = [
                                                     <Eye class="mr-2 h-4 w-4" />
                                                     Preview
                                                 </a>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem @click="updateTier(position)">
+                                                <Sparkles class="mr-2 h-4 w-4" />
+                                                Change Tier
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem @click="extendExpiration(position)">
+                                                <Calendar class="mr-2 h-4 w-4" />
+                                                Extend Expiration
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem @click="featurePosition(position)">
@@ -636,23 +584,81 @@ const breadcrumbs = [
             </Card>
         </div>
 
-        <!-- Bulk Action Confirmation Dialog -->
-        <AlertDialog v-model:open="showBulkDialog">
+        <!-- Archive Position Confirmation Dialog -->
+        <AlertDialog v-model:open="showArchiveDialog">
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>{{ getBulkActionTitle() }}</AlertDialogTitle>
+                    <AlertDialogTitle>Archive Position?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        {{ getBulkActionDescription() }}
+                        Are you sure you want to archive "{{ positionToArchive?.title }}"? Archived positions will no longer be visible to candidates.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel :disabled="isProcessing">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction 
-                        :disabled="isProcessing"
-                        :class="{ 'bg-destructive hover:bg-destructive/90': bulkAction === 'delete' }"
-                        @click.prevent="executeBulkAction"
+                        class="bg-destructive hover:bg-destructive/90"
+                        @click.prevent="performArchive"
                     >
-                        {{ isProcessing ? 'Processing...' : 'Confirm' }}
+                        Archive Position
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <!-- Update Tier Dialog -->
+        <AlertDialog v-model:open="showTierDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Change Listing Tier</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Select the listing tier for "{{ positionToUpdateTier?.title }}"
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div class="py-4">
+                    <Select v-model="newTier">
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="regular">Regular</SelectItem>
+                            <SelectItem value="featured">Featured</SelectItem>
+                            <SelectItem value="top">Top</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction @click.prevent="performTierUpdate">
+                        Update Tier
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <!-- Extend Expiration Dialog -->
+        <AlertDialog v-model:open="showExtendDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Extend Expiration</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Extend the expiration date for "{{ positionToExtend?.title }}"
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div class="py-4">
+                    <Label for="extend_days">Days to extend</Label>
+                    <Input
+                        id="extend_days"
+                        v-model.number="extendDays"
+                        type="number"
+                        min="1"
+                        max="365"
+                        class="mt-2"
+                    />
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction @click.prevent="performExtendExpiration">
+                        Extend Expiration
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

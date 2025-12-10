@@ -11,7 +11,7 @@ class UpdateCompanyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->isHR();
+        return $this->user()->isHR() || $this->user()->isAdmin();
     }
 
     /**

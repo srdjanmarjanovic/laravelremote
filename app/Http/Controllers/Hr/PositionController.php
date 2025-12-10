@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Hr;
 
+use App\Enums\ListingType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePositionRequest;
 use App\Http\Requests\UpdatePositionRequest;
 use App\Models\Company;
 use App\Models\Position;
 use App\Models\Technology;
+use App\Services\Payment\PositionPaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -16,6 +18,10 @@ use Inertia\Response;
 
 class PositionController extends Controller
 {
+    public function __construct(
+        protected PositionPaymentService $paymentService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -120,10 +126,8 @@ class PositionController extends Controller
         // Set creator
         $validated['created_by_user_id'] = auth()->id();
 
-        // Set published_at if status is published
-        if ($validated['status'] === 'published') {
-            $validated['published_at'] = now();
-        }
+        // HR cannot control status - always save as draft
+        $validated['status'] = 'draft';
 
         // Extract technology IDs and custom questions before creating
         $technologyIds = $validated['technology_ids'] ?? [];
@@ -148,8 +152,9 @@ class PositionController extends Controller
             ]);
         }
 
-        return redirect()->route('hr.positions.index')
-            ->with('message', 'Position created successfully.');
+        // Redirect to payment page after creation
+        return redirect()->route('hr.positions.payment', $position)
+            ->with('message', 'Position created successfully. Please complete payment to publish.');
     }
 
     /**
@@ -240,10 +245,41 @@ class PositionController extends Controller
                 ->toArray(),
         ];
 
+        // Calculate upgrade options if position is published
+        $upgradeOptions = [];
+        if ($position->status === 'published' && $position->hasPaid()) {
+            $currentTier = $position->listing_type;
+            $remainingDays = $this->paymentService->getRemainingDays($position);
+
+            if ($this->paymentService->canUpgradeTo($position, ListingType::Featured)) {
+                $upgradeOptions['featured'] = [
+                    'tier' => 'featured',
+                    'label' => 'Featured',
+                    'price' => $this->paymentService->calculateUpgradePrice($position, ListingType::Featured),
+                    'remaining_days' => $remainingDays,
+                ];
+            }
+
+            if ($this->paymentService->canUpgradeTo($position, ListingType::Top)) {
+                $upgradeOptions['top'] = [
+                    'tier' => 'top',
+                    'label' => 'Top',
+                    'price' => $this->paymentService->calculateUpgradePrice($position, ListingType::Top),
+                    'remaining_days' => $remainingDays,
+                ];
+            }
+        }
+
         return Inertia::render('Hr/Positions/Show', [
             'position' => $position,
             'applicationStats' => $applicationStats,
             'analytics' => $analytics,
+            'upgradeOptions' => $upgradeOptions,
+            'pricing' => [
+                'regular' => config('payments.pricing.regular'),
+                'featured' => config('payments.pricing.featured'),
+                'top' => config('payments.pricing.top'),
+            ],
         ]);
     }
 

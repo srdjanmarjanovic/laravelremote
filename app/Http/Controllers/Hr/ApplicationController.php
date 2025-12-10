@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Hr;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Company;
+use App\Notifications\ApplicationStatusChangedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -138,12 +139,19 @@ class ApplicationController extends Controller
             ]);
         }
 
+        $previousStatus = $application->status;
+
         $application->update([
             'status' => $validated['status'],
             'reviewed_by_user_id' => auth()->id(),
         ]);
 
-        // TODO: Send notification to applicant about status change
+        // Send notification to applicant about status change
+        if ($previousStatus !== $validated['status'] && ! $userArchived) {
+            $application->refresh();
+            $application->load(['position.company', 'user']);
+            $application->user->notify(new ApplicationStatusChangedNotification($application, $previousStatus));
+        }
 
         return back()->with('message', 'Application status updated successfully.');
     }

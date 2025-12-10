@@ -32,6 +32,8 @@ class Position extends Model
         'allow_platform_applications',
         'expires_at',
         'published_at',
+        'paid_at',
+        'payment_id',
     ];
 
     protected function casts(): array
@@ -44,6 +46,7 @@ class Position extends Model
             'allow_platform_applications' => 'boolean',
             'expires_at' => 'datetime',
             'published_at' => 'datetime',
+            'paid_at' => 'datetime',
         ];
     }
 
@@ -77,6 +80,11 @@ class Position extends Model
         return $this->hasMany(PositionView::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function isPublished(): bool
     {
         return $this->status === 'published' && $this->published_at !== null;
@@ -93,5 +101,18 @@ class Position extends Model
                ! $this->isExpired() &&
                $this->allow_platform_applications &&
                ! $this->is_external;
+    }
+
+    public function hasPaid(): bool
+    {
+        return $this->paid_at !== null;
+    }
+
+    public function getLatestPayment(): ?Payment
+    {
+        return $this->payments()
+            ->where('status', \App\Enums\PaymentStatus::Completed)
+            ->latest()
+            ->first();
     }
 }

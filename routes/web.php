@@ -1,8 +1,11 @@
 <?php
 
 use App\Enums\ListingType;
+use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
+use App\Http\Controllers\Admin\CompanyController as AdminCompanyController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PositionController as AdminPositionController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\Auth\AccountTypeController;
 use App\Http\Controllers\Auth\SocialAuthController;
@@ -11,7 +14,10 @@ use App\Http\Controllers\Developer\ProfileController as DeveloperProfileControll
 use App\Http\Controllers\Hr\ApplicationController as HrApplicationController;
 use App\Http\Controllers\Hr\CompanySetupController;
 use App\Http\Controllers\Hr\DashboardController as HrDashboardController;
+use App\Http\Controllers\Hr\PaymentController as HrPaymentController;
 use App\Http\Controllers\Hr\PositionController as HrPositionController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PublicPositionController;
 use Illuminate\Support\Facades\Route;
 
@@ -90,6 +96,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->route('developer.dashboard');
     })->name('dashboard');
+
+    // Notifications
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 });
 
 /*
@@ -141,7 +152,16 @@ Route::middleware(['auth', 'verified', 'role:hr'])->prefix('hr')->name('hr.')->g
         Route::get('positions/{position}/preview', [HrPositionController::class, 'preview'])->name('positions.preview');
         Route::post('positions/{position}/archive', [HrPositionController::class, 'archive'])->name('positions.archive');
         Route::post('positions/{position}/toggle-applications', [HrPositionController::class, 'toggleApplications'])->name('positions.toggle-applications');
+
+        // Payment routes
+        Route::get('positions/{position}/payment', [PaymentController::class, 'show'])->name('positions.payment');
+        Route::post('positions/{position}/payment/checkout', [PaymentController::class, 'checkout'])->name('positions.payment.checkout');
+        Route::post('positions/{position}/payment/upgrade', [PaymentController::class, 'upgrade'])->name('positions.payment.upgrade');
+        Route::get('positions/{position}/payment/success', [PaymentController::class, 'success'])->name('positions.payment.success');
     });
+
+    // Payment history
+    Route::get('payments', [HrPaymentController::class, 'index'])->name('payments.index');
 
     // Application management
     Route::get('applications', [HrApplicationController::class, 'index'])->name('applications.index');
@@ -160,10 +180,51 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Position management
     Route::get('positions', [AdminPositionController::class, 'index'])->name('positions.index');
+    Route::get('positions/create', [AdminPositionController::class, 'create'])->name('positions.create');
+    Route::post('positions', [AdminPositionController::class, 'store'])->name('positions.store');
+    Route::get('positions/{position}/edit', [AdminPositionController::class, 'edit'])->name('positions.edit');
+    Route::put('positions/{position}', [AdminPositionController::class, 'update'])->name('positions.update');
     Route::post('positions/{position}/feature', [AdminPositionController::class, 'feature'])->name('positions.feature');
+    Route::post('positions/{position}/tier', [AdminPositionController::class, 'updateTier'])->name('positions.tier');
+    Route::post('positions/{position}/extend-expiration', [AdminPositionController::class, 'extendExpiration'])->name('positions.extend-expiration');
     Route::post('positions/{position}/archive', [AdminPositionController::class, 'archive'])->name('positions.archive');
     Route::post('positions/bulk-action', [AdminPositionController::class, 'bulkAction'])->name('positions.bulk-action');
+
+    // User management
+    Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+
+    // Company management
+    Route::get('companies', [AdminCompanyController::class, 'index'])->name('companies.index');
+    Route::get('companies/create', [AdminCompanyController::class, 'create'])->name('companies.create');
+    Route::post('companies', [AdminCompanyController::class, 'store'])->name('companies.store');
+    Route::get('companies/{company}', [AdminCompanyController::class, 'show'])->name('companies.show');
+    Route::get('companies/{company}/edit', [AdminCompanyController::class, 'edit'])->name('companies.edit');
+    Route::put('companies/{company}', [AdminCompanyController::class, 'update'])->name('companies.update');
+    Route::delete('companies/{company}', [AdminCompanyController::class, 'destroy'])->name('companies.destroy');
+
+    // Company user management
+    Route::get('companies/{company}/users/search', [AdminCompanyController::class, 'searchUsers'])->name('companies.users.search');
+    Route::post('companies/{company}/users', [AdminCompanyController::class, 'attachUser'])->name('companies.users.attach');
+    Route::delete('companies/{company}/users/{user}', [AdminCompanyController::class, 'detachUser'])->name('companies.users.detach');
+    Route::put('companies/{company}/users/{user}/role', [AdminCompanyController::class, 'updateUserRole'])->name('companies.users.role');
+
+    // Application management
+    Route::get('applications', [AdminApplicationController::class, 'index'])->name('applications.index');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Settings Routes
+|--------------------------------------------------------------------------
+*/
+
+/*
+|--------------------------------------------------------------------------
+| Payment Webhooks
+|--------------------------------------------------------------------------
+*/
+
+Route::post('webhooks/payment', [PaymentController::class, 'webhook'])->name('payment.webhook');
 
 /*
 |--------------------------------------------------------------------------

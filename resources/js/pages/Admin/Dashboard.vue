@@ -15,6 +15,9 @@ import {
     XCircle,
     Archive,
     Star,
+    DollarSign,
+    AlertCircle,
+    RefreshCw,
 } from 'lucide-vue-next';
 import admin from '@/routes/admin';
 
@@ -58,11 +61,19 @@ defineProps<{
         total_companies: number;
         total_developers: number;
         total_hrs: number;
+        total_revenue: number;
+        pending_payments: number;
+        failed_payments: number;
+        refunded_payments: number;
+        total_payments: number;
+        completed_payments: number;
     };
     recentPositions: Position[];
     recentApplications: Application[];
     positionsByStatus: Record<string, number>;
     applicationsByStatus: Record<string, number>;
+    paymentsByStatus: Record<string, number>;
+    monthlyRevenue: Record<string, number>;
 }>();
 
 const getStatusBadge = (status: string) => {
@@ -85,6 +96,14 @@ const formatDate = (date: string) => {
         day: 'numeric',
         year: 'numeric',
     });
+};
+
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+    }).format(amount);
 };
 
 const breadcrumbs = [
@@ -115,6 +134,19 @@ const breadcrumbs = [
 
             <!-- Main Stats Grid -->
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium">Total Revenue</CardTitle>
+                        <DollarSign class="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-2xl font-bold">{{ formatCurrency(stats.total_revenue) }}</div>
+                        <p class="text-xs text-muted-foreground">
+                            {{ stats.completed_payments }} completed payments
+                        </p>
+                    </CardContent>
+                </Card>
+
                 <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">Total Positions</CardTitle>
@@ -151,23 +183,104 @@ const breadcrumbs = [
                         <p class="text-xs text-muted-foreground">Registered companies</p>
                     </CardContent>
                 </Card>
+            </div>
+
+            <!-- Payment Overview Cards -->
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium">Pending Payments</CardTitle>
+                        <Clock class="h-4 w-4 text-amber-600" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-2xl font-bold">{{ formatCurrency(stats.pending_payments) }}</div>
+                        <p class="text-xs text-muted-foreground">
+                            {{ paymentsByStatus.pending || 0 }} transactions
+                        </p>
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium">Users</CardTitle>
-                        <Users class="h-4 w-4 text-muted-foreground" />
+                        <CardTitle class="text-sm font-medium">Failed Payments</CardTitle>
+                        <AlertCircle class="h-4 w-4 text-red-600" />
                     </CardHeader>
                     <CardContent>
-                        <div class="text-2xl font-bold">{{ stats.total_developers + stats.total_hrs }}</div>
+                        <div class="text-2xl font-bold">{{ formatCurrency(stats.failed_payments) }}</div>
                         <p class="text-xs text-muted-foreground">
-                            {{ stats.total_developers }} developers, {{ stats.total_hrs }} HR
+                            {{ paymentsByStatus.failed || 0 }} transactions
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium">Refunded Payments</CardTitle>
+                        <RefreshCw class="h-4 w-4 text-orange-600" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-2xl font-bold">{{ formatCurrency(stats.refunded_payments) }}</div>
+                        <p class="text-xs text-muted-foreground">
+                            {{ paymentsByStatus.refunded || 0 }} transactions
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium">Total Payments</CardTitle>
+                        <DollarSign class="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-2xl font-bold">{{ stats.total_payments }}</div>
+                        <p class="text-xs text-muted-foreground">
+                            All payment transactions
                         </p>
                     </CardContent>
                 </Card>
             </div>
 
             <!-- Status Breakdown Cards -->
-            <div class="grid gap-4 md:grid-cols-2">
+            <div class="grid gap-4 md:grid-cols-3">
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="text-base">Payments by Status</CardTitle>
+                        <CardDescription>Distribution of payment statuses</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <CheckCircle class="h-4 w-4 text-green-600" />
+                                    <span class="text-sm">Completed</span>
+                                </div>
+                                <Badge variant="default" class="bg-green-600">{{ paymentsByStatus.completed || 0 }}</Badge>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <Clock class="h-4 w-4 text-amber-600" />
+                                    <span class="text-sm">Pending</span>
+                                </div>
+                                <Badge variant="secondary">{{ paymentsByStatus.pending || 0 }}</Badge>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <XCircle class="h-4 w-4 text-red-600" />
+                                    <span class="text-sm">Failed</span>
+                                </div>
+                                <Badge variant="destructive">{{ paymentsByStatus.failed || 0 }}</Badge>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <RefreshCw class="h-4 w-4 text-orange-600" />
+                                    <span class="text-sm">Refunded</span>
+                                </div>
+                                <Badge variant="outline">{{ paymentsByStatus.refunded || 0 }}</Badge>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card>
                     <CardHeader>
                         <CardTitle class="text-base">Positions by Status</CardTitle>
@@ -338,38 +451,6 @@ const breadcrumbs = [
                 </Card>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="grid gap-4 md:grid-cols-3">
-                <Link :href="admin.positions.index().url">
-                    <Card class="cursor-pointer transition-colors hover:bg-accent">
-                        <CardHeader>
-                            <Briefcase class="mb-2 h-8 w-8 text-primary" />
-                            <CardTitle>Manage Positions</CardTitle>
-                            <CardDescription>Feature, archive, or moderate job postings</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </Link>
-
-                <Link :href="admin.positions.index({ query: { status: 'published' } }).url">
-                    <Card class="cursor-pointer transition-colors hover:bg-accent">
-                        <CardHeader>
-                            <Star class="mb-2 h-8 w-8 text-amber-600" />
-                            <CardTitle>Feature Positions</CardTitle>
-                            <CardDescription>Promote positions to featured listings</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </Link>
-
-                <Link :href="admin.positions.index({ query: { status: 'expired' } }).url">
-                    <Card class="cursor-pointer transition-colors hover:bg-accent">
-                        <CardHeader>
-                            <Archive class="mb-2 h-8 w-8 text-muted-foreground" />
-                            <CardTitle>Review Expired</CardTitle>
-                            <CardDescription>Review and manage expired positions</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </Link>
-            </div>
         </div>
     </AppLayout>
 </template>

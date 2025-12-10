@@ -7,6 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
     ArchiveX,
     Briefcase,
     Building2,
@@ -22,12 +32,16 @@ import {
     Mail,
     Monitor,
     Smartphone,
+    Sparkles,
+    Star,
     Tablet,
     Users,
+    Zap,
 } from 'lucide-vue-next';
 import hr from '@/routes/hr';
 import positions from '@/routes/positions';
 import { computed, ref } from 'vue';
+import { toast } from 'vue-sonner';
 
 interface Technology {
     id: number;
@@ -115,13 +129,27 @@ interface Analytics {
     views_by_date: Array<{ date: string; count: number }>;
 }
 
+interface UpgradeOption {
+    tier: string;
+    label: string;
+    price: number;
+    remaining_days: number | null;
+}
+
 const props = defineProps<{
     position: Position;
     applicationStats: ApplicationStats;
     analytics: Analytics;
+    upgradeOptions?: Record<string, UpgradeOption>;
+    pricing?: {
+        regular: number;
+        featured: number;
+        top: number;
+    };
 }>();
 
 const activeTab = ref('all');
+const showCloseConfirmDialog = ref(false);
 
 const filteredApplications = computed(() => {
     if (activeTab.value === 'all') {
@@ -155,7 +183,7 @@ const formatSalary = (min: number | null, max: number | null) => {
 
 const getStatusColor = (status: string) => {
     const colors = {
-        draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+        draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
         published: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
         closed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     };
@@ -186,7 +214,7 @@ const getLocationLabel = (remoteType: string, locationRestriction: string | null
 const getApplicationStatusColor = (status: string) => {
     const colors = {
         pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-        reviewing: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+        reviewing: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
         accepted: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
         rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     };
@@ -209,12 +237,43 @@ const rejectApplication = (applicationId: number) => {
 };
 
 const toggleApplications = () => {
+    // If closing applications, show confirmation dialog
+    if (props.position.allow_platform_applications) {
+        showCloseConfirmDialog.value = true;
+        return;
+    }
+
+    // If opening applications, proceed directly
+    performToggle();
+};
+
+const performToggle = () => {
     const form = useForm({});
 
-    form.post(hr.positions['toggle-applications'](props.position.id).url, {
+    form.post(hr.positions.toggleApplications(props.position.id).url, {
         preserveScroll: true,
         onSuccess: () => {
+            showCloseConfirmDialog.value = false;
             location.reload();
+        },
+        onError: () => {
+            toast.error('There was an error toggling applications. Please try again.');
+        },
+    });
+};
+
+const upgradeTier = (tier: string) => {
+    const form = useForm({
+        tier,
+    });
+
+    form.post(hr.positions.payment.upgrade(props.position.id).url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Upgrade initiated. Redirecting to payment...');
+        },
+        onError: () => {
+            toast.error('There was an error processing the upgrade. Please try again.');
         },
     });
 };
@@ -595,7 +654,7 @@ const breadcrumbs = [
                                         <Badge
                                             v-if="position.is_external"
                                             variant="outline"
-                                            class="border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-300"
+                                            class="border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-300"
                                         >
                                             External
                                         </Badge>
@@ -733,7 +792,7 @@ const breadcrumbs = [
                                                 'block rounded-lg border p-4 transition-colors dark:border-gray-700',
                                                 application.user_archived
                                                     ? 'cursor-not-allowed opacity-60'
-                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                    : 'hover:bg-muted/50'
                                             ]"
                                         >
                                             <div class="flex items-start justify-between">
@@ -792,7 +851,7 @@ const breadcrumbs = [
                                                 'block rounded-lg border p-4 transition-colors dark:border-gray-700',
                                                 application.user_archived
                                                     ? 'cursor-not-allowed opacity-60'
-                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                    : 'hover:bg-muted/50'
                                             ]"
                                         >
                                             <div class="flex items-start justify-between">
@@ -848,7 +907,7 @@ const breadcrumbs = [
                                                 'block rounded-lg border p-4 transition-colors dark:border-gray-700',
                                                 application.user_archived
                                                     ? 'cursor-not-allowed opacity-60'
-                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                    : 'hover:bg-muted/50'
                                             ]"
                                         >
                                             <div class="flex items-start justify-between">
@@ -904,7 +963,7 @@ const breadcrumbs = [
                                                 'block rounded-lg border p-4 transition-colors dark:border-gray-700',
                                                 application.user_archived
                                                     ? 'cursor-not-allowed opacity-60'
-                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                    : 'hover:bg-muted/50'
                                             ]"
                                         >
                                             <div class="flex items-start justify-between">
@@ -960,7 +1019,7 @@ const breadcrumbs = [
                                                 'block rounded-lg border p-4 transition-colors dark:border-gray-700',
                                                 application.user_archived
                                                     ? 'cursor-not-allowed opacity-60'
-                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                    : 'hover:bg-muted/50'
                                             ]"
                                         >
                                             <div class="flex items-start justify-between">
@@ -1011,6 +1070,54 @@ const breadcrumbs = [
 
                 <!-- Sidebar -->
                 <div class="lg:col-span-1 space-y-6">
+                    <!-- Upgrade Tier Card -->
+                    <Card v-if="upgradeOptions && Object.keys(upgradeOptions).length > 0">
+                        <CardHeader>
+                            <div class="flex items-center gap-2">
+                                <Zap class="h-5 w-5" />
+                                <CardTitle>Upgrade Tier</CardTitle>
+                            </div>
+                            <CardDescription>
+                                Boost your position visibility with a higher tier
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent class="space-y-3">
+                            <div
+                                v-for="(option, key) in upgradeOptions"
+                                :key="key"
+                                class="rounded-lg border p-3 space-y-2"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <component
+                                            :is="option.tier === 'top' ? Star : Sparkles"
+                                            class="h-4 w-4"
+                                        />
+                                        <span class="font-medium">{{ option.label }}</span>
+                                    </div>
+                                    <Badge variant="secondary">
+                                        ${{ option.price.toFixed(2) }}
+                                    </Badge>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    <span v-if="option.remaining_days !== null">
+                                        Prorated for {{ option.remaining_days }} remaining days
+                                    </span>
+                                    <span v-else>
+                                        Full upgrade price
+                                    </span>
+                                </p>
+                                <Button
+                                    size="sm"
+                                    class="w-full"
+                                    @click="upgradeTier(option.tier)"
+                                >
+                                    Upgrade to {{ option.label }}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     <!-- Statistics -->
                     <Card>
                         <CardHeader>
@@ -1082,7 +1189,7 @@ const breadcrumbs = [
                                 <a
                                     :href="position.external_url"
                                     target="_blank"
-                                    class="text-blue-600 hover:underline dark:text-blue-400"
+                                    class="text-gray-600 hover:underline dark:text-gray-400"
                                 >
                                     View external posting →
                                 </a>
@@ -1188,7 +1295,7 @@ const breadcrumbs = [
                                             href="https://en.wikipedia.org/wiki/Belgrade–Pristina_Dialogue#cite_note-32"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="text-blue-600 hover:underline dark:text-blue-400"
+                                            class="text-gray-600 hover:underline dark:text-gray-400"
                                         >
                                             disputed
                                         </a>
@@ -1212,6 +1319,28 @@ const breadcrumbs = [
                 </div>
             </div>
         </div>
+
+        <!-- Close Applications Confirmation Dialog -->
+        <AlertDialog v-model:open="showCloseConfirmDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Close Applications?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to close applications for this position? 
+                        This will prevent new applicants from applying, but existing applications will remain visible.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        class="bg-destructive hover:bg-destructive/90"
+                        @click.prevent="performToggle"
+                    >
+                        Close Applications
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </AppLayout>
 </template>
 

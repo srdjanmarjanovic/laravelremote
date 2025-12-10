@@ -7,6 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Upload, X, Building2, Globe, AlertCircle, Twitter, Linkedin, Github } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { toast } from 'vue-sonner';
@@ -32,6 +42,7 @@ const props = defineProps<{
 
 const logoInput = ref<HTMLInputElement | null>(null);
 const selectedLogoPreview = ref<string>('');
+const showDeleteLogoDialog = ref(false);
 
 const isNewCompany = computed(() => !props.company?.id);
 const pageTitle = computed(() => props.isEditing ? 'Edit Company Profile' : 'Company Setup');
@@ -70,28 +81,58 @@ const removeLogo = () => {
 
 const submit = () => {
     const endpoint = isNewCompany.value ? hr.company.store().url : hr.company.update().url;
-    const method = isNewCompany.value ? 'post' : 'put';
-
-    form[method](endpoint, {
-        preserveScroll: true,
-        onSuccess: () => {
-            toast.success(isNewCompany.value ? 'Company profile created!' : 'Company profile updated!');
-        },
-        onError: () => {
-            toast.error('There was an error saving your company profile. Please check the form.');
-        },
-    });
-};
-
-const deleteLogo = () => {
-    if (confirm('Are you sure you want to delete the company logo?')) {
-        router.delete(hr.company.logo.delete().url, {
+    
+    // Use POST with _method: 'put' when updating with files to avoid multipart/form-data issues with PUT
+    if (!isNewCompany.value && form.logo) {
+        form.transform((data) => ({
+            ...data,
+            _method: 'put',
+        })).post(endpoint, {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Logo deleted successfully!');
+                toast.success('Company profile updated!');
+                // Reset logo field after successful upload
+                form.logo = null;
+                selectedLogoPreview.value = '';
+            },
+            onError: () => {
+                toast.error('There was an error saving your company profile. Please check the form.');
+            },
+        });
+    } else {
+        const method = isNewCompany.value ? 'post' : 'put';
+        form[method](endpoint, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success(isNewCompany.value ? 'Company profile created!' : 'Company profile updated!');
+                // Reset logo field after successful upload
+                if (form.logo) {
+                    form.logo = null;
+                    selectedLogoPreview.value = '';
+                }
+            },
+            onError: () => {
+                toast.error('There was an error saving your company profile. Please check the form.');
             },
         });
     }
+};
+
+const deleteLogo = () => {
+    showDeleteLogoDialog.value = true;
+};
+
+const performDeleteLogo = () => {
+    router.delete(hr.company.logo.delete().url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Logo deleted successfully!');
+            showDeleteLogoDialog.value = false;
+        },
+        onError: () => {
+            toast.error('Failed to delete logo');
+        },
+    });
 };
 
 const breadcrumbs = computed(() => [
@@ -330,6 +371,27 @@ const breadcrumbs = computed(() => [
                 </div>
             </form>
         </div>
+
+        <!-- Delete Logo Confirmation Dialog -->
+        <AlertDialog v-model:open="showDeleteLogoDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Company Logo?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to delete the company logo? This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        class="bg-destructive hover:bg-destructive/90"
+                        @click.prevent="performDeleteLogo"
+                    >
+                        Delete Logo
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </AppLayout>
 </template>
 

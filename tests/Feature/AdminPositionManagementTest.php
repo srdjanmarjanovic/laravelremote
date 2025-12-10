@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\ListingType;
+use App\Enums\PaymentStatus;
 use App\Models\Application;
 use App\Models\Company;
+use App\Models\Payment;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,6 +36,8 @@ describe('Admin Dashboard', function () {
             ->has('recentApplications')
             ->has('positionsByStatus')
             ->has('applicationsByStatus')
+            ->has('paymentsByStatus')
+            ->has('monthlyRevenue')
         );
     });
 
@@ -68,6 +72,21 @@ describe('Admin Dashboard', function () {
             'position_id' => $publishedPositions->last()->id,
         ]);
 
+        // Create payment data
+        $user = User::factory()->hr()->create();
+        Payment::factory()->count(3)->create([
+            'status' => PaymentStatus::Completed,
+            'amount' => 50.00,
+            'user_id' => $user->id,
+            'position_id' => $publishedPositions->first()->id,
+        ]);
+        Payment::factory()->count(2)->create([
+            'status' => PaymentStatus::Pending,
+            'amount' => 30.00,
+            'user_id' => $user->id,
+            'position_id' => $publishedPositions->last()->id,
+        ]);
+
         actingAs($this->admin);
 
         $response = get(route('admin.dashboard'));
@@ -78,6 +97,10 @@ describe('Admin Dashboard', function () {
             ->where('stats.active_positions', 3)
             ->where('stats.total_applications', 7)
             ->where('stats.pending_applications', 5)
+            ->where('stats.total_revenue', 150)
+            ->where('stats.pending_payments', 60)
+            ->where('stats.total_payments', 5)
+            ->where('stats.completed_payments', 3)
         );
     });
 });

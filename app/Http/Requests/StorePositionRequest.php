@@ -60,12 +60,13 @@ class StorePositionRequest extends FormRequest
                     }
                 },
             ],
-            'status' => ['required', Rule::in(['draft', 'published'])],
+            // Admin can control status, expiration, and listing type; HR cannot
+            'status' => ['nullable', Rule::in(['draft', 'published', 'expired', 'archived'])],
+            'expires_at' => ['nullable', 'date', 'after:now'],
             'listing_type' => ['nullable', Rule::enum(ListingType::class)],
             'is_external' => ['boolean'],
             'external_apply_url' => ['nullable', 'url', 'max:255', 'required_if:is_external,true'],
             'allow_platform_applications' => ['boolean'],
-            'expires_at' => ['nullable', 'date', 'after:today'],
             'technology_ids' => ['nullable', 'array'],
             'technology_ids.*' => ['exists:technologies,id'],
             'custom_questions' => ['nullable', 'array', 'max:10'],

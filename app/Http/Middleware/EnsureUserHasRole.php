@@ -30,6 +30,13 @@ class EnsureUserHasRole
             }
         }
 
+        // For Inertia requests, redirect to dashboard instead of showing error overlay
+        if ($request->header('X-Inertia')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You do not have permission to access this page.');
+        }
+
+        // For non-Inertia requests (API, etc.), use abort
         abort(403, 'Unauthorized action.');
     }
 }

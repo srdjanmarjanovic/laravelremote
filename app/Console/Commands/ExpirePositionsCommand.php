@@ -3,7 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\Position;
+use App\Notifications\PositionExpiredNotification;
+use App\Notifications\PositionExpiringNotification;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Notification;
 
 class ExpirePositionsCommand extends Command
 {
@@ -30,6 +33,7 @@ class ExpirePositionsCommand extends Command
         $positionsToExpire = Position::where('status', 'published')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now())
+            ->with(['creator', 'company'])
             ->get();
 
         if ($positionsToExpire->isEmpty()) {
@@ -43,23 +47,28 @@ class ExpirePositionsCommand extends Command
         foreach ($positionsToExpire as $position) {
             $position->update(['status' => 'expired']);
 
-            // TODO: Send notification to position creator about expiration
+            // Send notification to position creator about expiration
+            $position->creator->notify(new PositionExpiredNotification($position));
 
             $count++;
         }
 
         $this->info("Successfully expired {$count} position(s).");
 
-        // Send warnings for positions expiring soon (within 3 days)
+        // Send warnings for positions expiring soon (7 days before)
         $positionsExpiringSoon = Position::where('status', 'published')
             ->whereNotNull('expires_at')
-            ->whereBetween('expires_at', [now(), now()->addDays(3)])
+            ->whereBetween('expires_at', [now()->addDays(7), now()->addDays(8)])
+            ->with(['creator', 'company'])
             ->get();
 
         $warningCount = 0;
 
         foreach ($positionsExpiringSoon as $position) {
-            // TODO: Send notification to position creator about upcoming expiration
+            $daysRemaining = now()->diffInDays($position->expires_at, false);
+
+            // Send notification to position creator about upcoming expiration
+            $position->creator->notify(new PositionExpiringNotification($position, $daysRemaining));
 
             $warningCount++;
         }
