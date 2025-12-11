@@ -18,7 +18,13 @@ interface Position {
     created_at: string;
 }
 
+interface Company {
+    name: string | null;
+    description: string | null;
+}
+
 defineProps<{
+    company?: Company | null;
     positions?: Position[];
     stats?: {
         total_positions: number;
@@ -62,6 +68,24 @@ const breadcrumbs = [
                     </Button>
                 </Link>
             </div>
+
+            <!-- Company Profile Completion Alert -->
+            <Card v-if="!company?.name || !company?.description" class="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-amber-900 dark:text-amber-100">
+                        <Building class="h-5 w-5" />
+                        Complete Your Company Profile
+                    </CardTitle>
+                    <CardDescription class="text-amber-700 dark:text-amber-300">
+                        Complete your company profile to start posting positions
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Link :href="company ? hr.company.edit().url : hr.company.setup().url">
+                        <Button>Complete Company Profile</Button>
+                    </Link>
+                </CardContent>
+            </Card>
 
             <!-- Quick Actions -->
             <div class="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">

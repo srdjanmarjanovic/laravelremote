@@ -17,7 +17,7 @@ import developer from '@/routes/developer';
 import admin from '@/routes/admin';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Briefcase, Users, FileText, Building2 } from 'lucide-vue-next';
+import { LayoutGrid, Briefcase, Users, FileText, Building2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -95,18 +95,7 @@ const mainNavItems = computed((): NavItem[] => {
     return items;
 });
 
-const footerNavItems: NavItem[] = [
-    // {
-    //     title: 'Github Repo',
-    //     href: 'https://github.com/laravel/vue-starter-kit',
-    //     icon: Folder,
-    // },
-    // {
-    //     title: 'Documentation',
-    //     href: 'https://laravel.com/docs/starter-kits#vue',
-    //     icon: BookOpen,
-    // },
-];
+const footerNavItems: NavItem[] = [];
 </script>
 
 <template>

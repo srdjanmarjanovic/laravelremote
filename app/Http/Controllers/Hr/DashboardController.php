@@ -49,7 +49,14 @@ class DashboardController extends Controller
             ->count();
         $totalViews = PositionView::whereIn('position_id', $positionIds)->count();
 
+        // Get primary company for HR users
+        $company = $user->isAdmin() ? null : $user->primaryCompany();
+
         return Inertia::render('Hr/Dashboard', [
+            'company' => $company ? [
+                'name' => $company->name,
+                'description' => $company->description,
+            ] : null,
             'positions' => $recentPositions,
             'stats' => [
                 'total_positions' => $totalPositions,
