@@ -137,13 +137,13 @@
     <!-- Footer -->
     <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="space-y-4">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Company</h3>
                     <ul class="space-y-2">
                         <li><a href="{{ route('about') }}" class="text-muted-foreground hover:text-primary transition-colors">About</a></li>
-                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Blog</a></li>
-                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Careers</a></li>
+                        <li><a href="{{ route('privacy') }}" class="text-muted-foreground hover:text-primary transition-colors">Privacy</a></li>
+                        <li><a href="{{ route('terms') }}" class="text-muted-foreground hover:text-primary transition-colors">Terms</a></li>
                     </ul>
                 </div>
 
@@ -160,14 +160,6 @@
                     <ul class="space-y-2">
                         <li><a href="/register" class="text-muted-foreground hover:text-primary transition-colors">Post a Job</a></li>
                         <li><a href="{{ route('pricing') }}" class="text-muted-foreground hover:text-primary transition-colors">Pricing</a></li>
-                    </ul>
-                </div>
-
-                <div class="space-y-4">
-                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">Legal</h3>
-                    <ul class="space-y-2">
-                        <li><a href="{{ route('privacy') }}" class="text-muted-foreground hover:text-primary transition-colors">Privacy</a></li>
-                        <li><a href="{{ route('terms') }}" class="text-muted-foreground hover:text-primary transition-colors">Terms</a></li>
                     </ul>
                 </div>
             </div>
