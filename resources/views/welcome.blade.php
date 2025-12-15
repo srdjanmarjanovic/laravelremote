@@ -84,9 +84,6 @@ use App\Enums\ListingType;
                     <h2 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                         Featured Positions
                     </h2>
-                    <p class="mt-4 text-lg text-muted-foreground">
-                        Hand-picked remote opportunities from top companies
-                    </p>
                 </div>
 
                 <div class="mt-12 grid gap-6 lg:grid-cols-2">
