@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { usePage, router } from '@inertiajs/vue3';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.css';
+import AddTechnologyModal from '@/components/AddTechnologyModal.vue';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-vue-next';
 
 interface Technology {
     id: number;
@@ -16,7 +20,14 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:modelValue': [value: number[]];
+    'technologies-updated': [technologies: Technology[]];
 }>();
+
+const page = usePage();
+const user = computed(() => page.props.auth?.user);
+const isAdmin = computed(() => user.value?.role === 'admin');
+
+const modalOpen = ref(false);
 
 // Convert modelValue (array of IDs) to array of technology objects
 const selectedTechnologies = computed(() => {
@@ -27,22 +38,52 @@ const handleUpdate = (selectedItems: Technology[]) => {
     const selectedIds = selectedItems.map(tech => tech.id);
     emit('update:modelValue', selectedIds);
 };
+
+const handleTechnologyCreated = (technology: Technology) => {
+    // Automatically select the newly created technology
+    if (!props.modelValue.includes(technology.id)) {
+        const newSelectedIds = [...props.modelValue, technology.id];
+        emit('update:modelValue', newSelectedIds);
+    }
+};
 </script>
 
 <template>
-    <div>
-        <Multiselect
-            :model-value="selectedTechnologies"
-            @update:model-value="handleUpdate"
-            :options="technologies"
-            :multiple="true"
-            :close-on-select="false"
-            :clear-on-select="true"
-            :preserve-search="false"
-            placeholder="Select technologies"
-            label="name"
-            track-by="id"
-            :preselect-first="false"/>
+    <div class="space-y-2">
+        <div class="flex items-center gap-2">
+            <div class="flex-1">
+                <Multiselect
+                    :model-value="selectedTechnologies"
+                    @update:model-value="handleUpdate"
+                    :options="technologies"
+                    :multiple="true"
+                    :close-on-select="false"
+                    :clear-on-select="true"
+                    :preserve-search="false"
+                    placeholder="Select technologies"
+                    label="name"
+                    track-by="id"
+                    :preselect-first="false"/>
+            </div>
+            <Button
+                v-if="isAdmin"
+                type="button"
+                variant="outline"
+                size="icon"
+                class="shrink-0"
+                @click="modalOpen = true"
+                title="Add new technology"
+            >
+                <Plus class="h-4 w-4" />
+            </Button>
+        </div>
+        <AddTechnologyModal
+            v-if="isAdmin"
+            :open="modalOpen"
+            :technologies="technologies"
+            @update:open="modalOpen = $event"
+            @technology-created="handleTechnologyCreated"
+        />
     </div>
 </template>
 

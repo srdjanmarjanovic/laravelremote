@@ -32,7 +32,7 @@ import developer from '@/routes/developer';
 import admin from '@/routes/admin';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { InertiaLinkProps, Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Menu, Briefcase, Users, FileText, Building2 } from 'lucide-vue-next';
+import { LayoutGrid, Menu, Briefcase, Users, FileText, Building2, Code } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -118,6 +118,11 @@ const mainNavItems = computed((): NavItem[] => {
                 title: 'Companies',
                 href: admin.companies.index().url,
                 icon: Building2,
+            },
+            {
+                title: 'Technologies',
+                href: admin.technologies.index().url,
+                icon: Code,
             },
             {
                 title: 'Applications',

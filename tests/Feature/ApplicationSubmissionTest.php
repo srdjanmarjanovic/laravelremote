@@ -97,7 +97,7 @@ describe('Application Submission - Apply Now Button Visibility', function () {
         $response = get(route('positions.show', $position->slug));
 
         $response->assertSuccessful();
-        $response->assertSee('Apply on Company Site');
+        $response->assertSee('Apply');
         $response->assertDontSee('Apply Now');
     });
 

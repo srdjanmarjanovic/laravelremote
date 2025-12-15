@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ApplicationController as AdminApplicationControll
 use App\Http\Controllers\Admin\CompanyController as AdminCompanyController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PositionController as AdminPositionController;
+use App\Http\Controllers\Admin\TechnologyController as AdminTechnologyController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\Auth\AccountTypeController;
@@ -225,6 +226,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Application management
     Route::get('applications', [AdminApplicationController::class, 'index'])->name('applications.index');
+
+    // Technology management
+    Route::get('technologies', [AdminTechnologyController::class, 'index'])->name('technologies.index');
+    Route::post('technologies', [AdminTechnologyController::class, 'store'])->name('technologies.store');
+    Route::put('technologies/{technology}', [AdminTechnologyController::class, 'update'])->name('technologies.update');
+    Route::delete('technologies/{technology}', [AdminTechnologyController::class, 'destroy'])->name('technologies.destroy');
 });
 
 /*

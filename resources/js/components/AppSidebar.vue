@@ -17,7 +17,7 @@ import developer from '@/routes/developer';
 import admin from '@/routes/admin';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Briefcase, Users, FileText, Building2 } from 'lucide-vue-next';
+import { LayoutGrid, Briefcase, Users, FileText, Building2, Code } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -83,6 +83,11 @@ const mainNavItems = computed((): NavItem[] => {
                 title: 'Companies',
                 href: admin.companies.index().url,
                 icon: Building2,
+            },
+            {
+                title: 'Technologies',
+                href: admin.technologies.index().url,
+                icon: Code,
             },
             {
                 title: 'Applications',

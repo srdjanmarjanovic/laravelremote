@@ -127,7 +127,7 @@ use App\Enums\ListingType;
                                     </button>
                                 @elseif($position->is_external)
                                     <button disabled class="inline-flex items-center px-6 py-3 bg-primary/50 text-primary-foreground font-medium rounded-lg cursor-not-allowed">
-                                        Apply on Company Site (Preview)
+                                        Apply (Preview)
                                         <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                         </svg>
