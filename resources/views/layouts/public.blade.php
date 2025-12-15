@@ -49,7 +49,7 @@
 </head>
 <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <!-- Navigation -->
-    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 transition-colors duration-300">
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 transition-colors duration-300" x-data="{ mobileMenuOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -61,7 +61,7 @@
                         <span class="text-xl font-bold text-foreground">RemoteLaravel<span class="text-primary">Jobs</span></span>
                     </a>
 
-                    <!-- Navigation Links -->
+                    <!-- Navigation Links - Desktop -->
                     <div class="hidden md:ml-10 md:flex md:space-x-8">
                         <a href="/positions" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             Browse Jobs
@@ -75,7 +75,8 @@
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-4">
+                <!-- Desktop Actions -->
+                <div class="hidden md:flex items-center space-x-4">
                     <!-- Appearance Toggle -->
                     <button @click="
                         const current = appearance;
@@ -125,6 +126,110 @@
                         </a>
                     @endauth
                 </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button
+                        @click="mobileMenuOpen = !mobileMenuOpen"
+                        class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                        aria-label="Toggle menu"
+                    >
+                        <svg x-show="!mobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg x-show="mobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div
+            x-show="mobileMenuOpen"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            x-cloak
+            class="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+        >
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <!-- Navigation Links -->
+                <a href="/positions" @click="mobileMenuOpen = false" class="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors">
+                    Browse Jobs
+                </a>
+                <a href="/companies" @click="mobileMenuOpen = false" class="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors">
+                    Companies
+                </a>
+                <a href="{{ route('about') }}" @click="mobileMenuOpen = false" class="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors">
+                    About
+                </a>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+
+                <!-- Theme Toggle -->
+                <div class="px-3 py-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-base font-medium text-foreground">Theme</span>
+                        <button @click="
+                            const current = appearance;
+                            if (current === 'light') {
+                                appearance = 'dark';
+                            } else if (current === 'dark') {
+                                appearance = 'system';
+                            } else {
+                                appearance = 'light';
+                            }
+                            const maxAge = 365 * 24 * 60 * 60;
+                            document.cookie = 'appearance=' + appearance + ';path=/;max-age=' + maxAge + ';SameSite=Lax';
+                            if (appearance === 'dark') {
+                                document.documentElement.classList.add('dark');
+                            } else if (appearance === 'light') {
+                                document.documentElement.classList.remove('dark');
+                            } else {
+                                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                                if (prefersDark) {
+                                    document.documentElement.classList.add('dark');
+                                } else {
+                                    document.documentElement.classList.remove('dark');
+                                }
+                            }
+                        " class="flex items-center space-x-2 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <svg x-show="appearance === 'light'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            <svg x-show="appearance === 'dark'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                            <svg x-show="appearance === 'system'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-sm" x-text="appearance === 'light' ? 'Light' : appearance === 'dark' ? 'Dark' : 'System'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+
+                <!-- Auth Links -->
+                @auth
+                    <a href="/dashboard" @click="mobileMenuOpen = false" class="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors">
+                        Dashboard
+                    </a>
+                @else
+                    <a href="/login" @click="mobileMenuOpen = false" class="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors">
+                        Sign in
+                    </a>
+                    <a href="/register" @click="mobileMenuOpen = false" class="block w-full mt-2 px-4 py-2 text-center text-base font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">
+                        Post a Job
+                    </a>
+                @endauth
             </div>
         </div>
     </nav>
