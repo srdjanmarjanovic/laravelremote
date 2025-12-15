@@ -298,8 +298,14 @@
                             <tr>
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Homepage Visibility</td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">—</td>
-                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">✓ Featured</td>
-                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">✓ Featured</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">
+                                    ✓ Featured<br>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(randomized when 6+ listings)</span>
+                                </td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">
+                                    ✓ Featured<br>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(randomized when 6+ listings)</span>
+                                </td>
                             </tr>
                             <tr>
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Support</td>
@@ -419,6 +425,10 @@
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">What payment methods do you accept?</h3>
                     <p class="text-gray-700 dark:text-gray-300">We accept all major credit and debit cards through our secure payment processors. Payment information is processed securely and never stored on our servers.</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">How does homepage visibility work for Featured and Top listings?</h3>
+                    <p class="text-gray-700 dark:text-gray-300">Featured and Top positions are displayed prominently on our homepage in the Featured Positions section. We show up to 6 positions at a time. When there are more than 6 Featured or Top positions available, we randomly rotate which ones are displayed to ensure fair visibility for all listings. This means your listing will appear on the homepage, but may rotate with other Featured/Top listings to give everyone equal exposure.</p>
                 </div>
             </div>
         </div>

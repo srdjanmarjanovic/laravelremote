@@ -44,7 +44,7 @@ Route::get('/', function () {
             ->whereIn('listing_type', [ListingType::Top, ListingType::Featured])
             ->with(['company', 'technologies'])
             ->withCount(['applications', 'views'])
-            ->latest('published_at')
+            ->inRandomOrder()
             ->limit(6)
             ->get(),
         'popular_technologies' => \App\Models\Technology::query()
