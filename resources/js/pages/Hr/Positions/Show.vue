@@ -1078,7 +1078,7 @@ const breadcrumbs = [
                                 <CardTitle>Upgrade Tier</CardTitle>
                             </div>
                             <CardDescription>
-                                Boost your position visibility with a higher tier
+                                Boost your position visibility with a higher tier. Featured and Top tiers are prominently displayed on our homepage.
                             </CardDescription>
                         </CardHeader>
                         <CardContent class="space-y-3">
@@ -1094,6 +1094,9 @@ const breadcrumbs = [
                                             class="h-4 w-4"
                                         />
                                         <span class="font-medium">{{ option.label }}</span>
+                                        <Badge v-if="option.tier === 'featured' || option.tier === 'top'" variant="outline" class="text-xs">
+                                            ⭐ Homepage
+                                        </Badge>
                                     </div>
                                     <Badge variant="secondary">
                                         ${{ option.price.toFixed(2) }}

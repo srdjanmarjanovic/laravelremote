@@ -16,8 +16,10 @@ use App\Http\Controllers\Hr\CompanySetupController;
 use App\Http\Controllers\Hr\DashboardController as HrDashboardController;
 use App\Http\Controllers\Hr\PaymentController as HrPaymentController;
 use App\Http\Controllers\Hr\PositionController as HrPositionController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PublicCompanyController;
 use App\Http\Controllers\PublicPositionController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,11 +60,23 @@ Route::get('/positions', [PublicPositionController::class, 'index'])->name('posi
 // Position details
 Route::get('/positions/{position:slug}', [PublicPositionController::class, 'show'])->name('positions.show');
 
+// Browse companies
+Route::get('/companies', [PublicCompanyController::class, 'index'])->name('companies.index');
+
+// Company details
+Route::get('/companies/{company:slug}', [PublicCompanyController::class, 'show'])->name('companies.show');
+
 // Social Authentication
 Route::prefix('auth')->group(function () {
     Route::get('{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('auth.social.redirect');
     Route::get('{provider}/callback', [SocialAuthController::class, 'callback'])->name('auth.social.callback');
 });
+
+// Legal Pages
+Route::get('/about', [LegalController::class, 'about'])->name('about');
+Route::get('/privacy', [LegalController::class, 'privacy'])->name('privacy');
+Route::get('/terms', [LegalController::class, 'terms'])->name('terms');
+Route::get('/pricing', [LegalController::class, 'pricing'])->name('pricing');
 
 /*
 |--------------------------------------------------------------------------
@@ -182,6 +196,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('positions', [AdminPositionController::class, 'index'])->name('positions.index');
     Route::get('positions/create', [AdminPositionController::class, 'create'])->name('positions.create');
     Route::post('positions', [AdminPositionController::class, 'store'])->name('positions.store');
+    Route::get('positions/{position}', [AdminPositionController::class, 'show'])->name('positions.show');
     Route::get('positions/{position}/edit', [AdminPositionController::class, 'edit'])->name('positions.edit');
     Route::put('positions/{position}', [AdminPositionController::class, 'update'])->name('positions.update');
     Route::post('positions/{position}/feature', [AdminPositionController::class, 'feature'])->name('positions.feature');

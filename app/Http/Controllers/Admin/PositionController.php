@@ -24,7 +24,10 @@ class PositionController extends Controller
     {
         $query = Position::query()
             ->with(['company', 'creator', 'technologies'])
-            ->withCount('applications');
+            ->withCount('applications')
+            ->with(['payments' => function ($q) {
+                $q->latest()->limit(1);
+            }]);
 
         // Admin position listing logic:
         // - Show only admin's own draft positions (not other companies' drafts)
@@ -70,10 +73,42 @@ class PositionController extends Controller
 
         $positions = $query->paginate(20)->withQueryString();
 
+        // Add payment status to each position
+        $positions->getCollection()->transform(function ($position) {
+            $position->payment_status = $this->getPaymentStatus($position);
+
+            return $position;
+        });
+
         return Inertia::render('Admin/Positions/Index', [
             'positions' => $positions,
             'filters' => $request->only(['status', 'company_id', 'search', 'sort_by', 'sort_order']),
         ]);
+    }
+
+    /**
+     * Get payment status for a position.
+     */
+    private function getPaymentStatus(Position $position): string
+    {
+        // If paid_at is set, position is paid
+        if ($position->paid_at !== null) {
+            return 'paid';
+        }
+
+        // Check latest payment
+        $latestPayment = $position->payments->first();
+        if ($latestPayment) {
+            return match ($latestPayment->status->value) {
+                'completed' => 'paid',
+                'pending' => 'pending',
+                'failed' => 'failed',
+                'refunded' => 'refunded',
+                default => 'unpaid',
+            };
+        }
+
+        return 'unpaid';
     }
 
     /**
@@ -187,6 +222,102 @@ class PositionController extends Controller
 
         return redirect()->route('admin.positions.index')
             ->with('message', 'Position created successfully.');
+    }
+
+    /**
+     * Display the specified position.
+     */
+    public function show(Position $position): Response
+    {
+        $this->authorize('view', $position);
+
+        $position->load([
+            'company',
+            'technologies',
+            'creator',
+            'customQuestions',
+            'applications' => function ($query) {
+                $query->with([
+                    'user' => function ($q) {
+                        $q->withTrashed();
+                    },
+                    'user.developerProfile',
+                ])->latest('applied_at');
+            },
+        ]);
+
+        // Add user_archived flag to each application
+        $position->applications->transform(function ($application) {
+            $application->user_archived = $application->user->trashed();
+
+            return $application;
+        });
+
+        $position->loadCount([
+            'applications',
+            'views',
+        ]);
+
+        // Get application counts by status
+        $applicationStats = [
+            'total' => $position->applications_count,
+            'pending' => $position->applications()->where('status', 'pending')->count(),
+            'reviewing' => $position->applications()->where('status', 'reviewing')->count(),
+            'accepted' => $position->applications()->where('status', 'accepted')->count(),
+            'rejected' => $position->applications()->where('status', 'rejected')->count(),
+        ];
+
+        // Get analytics data
+        $analytics = [
+            'total_views' => $position->views_count,
+            'countries' => \App\Models\PositionView::where('position_id', $position->id)
+                ->whereNotNull('country_code')
+                ->selectRaw('country_code, COUNT(*) as count')
+                ->groupBy('country_code')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get()
+                ->map(fn ($item) => [
+                    'country' => $item->country_code,
+                    'count' => $item->count,
+                ])
+                ->values()
+                ->toArray(),
+            'devices' => \App\Models\PositionView::where('position_id', $position->id)
+                ->whereNotNull('device_name')
+                ->selectRaw('device_name, device_type, browser, os, COUNT(*) as count')
+                ->groupBy('device_name', 'device_type', 'browser', 'os')
+                ->orderByDesc('count')
+                ->get()
+                ->map(fn ($item) => [
+                    'device' => $item->device_name,
+                    'device_type' => $item->device_type,
+                    'browser' => $item->browser,
+                    'os' => $item->os,
+                    'count' => $item->count,
+                ])
+                ->values()
+                ->toArray(),
+            'views_by_date' => \App\Models\PositionView::where('position_id', $position->id)
+                ->selectRaw('DATE(viewed_at) as date, COUNT(*) as count')
+                ->where('viewed_at', '>=', now()->subDays(30))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get()
+                ->map(fn ($item) => [
+                    'date' => $item->date,
+                    'count' => $item->count,
+                ])
+                ->values()
+                ->toArray(),
+        ];
+
+        return Inertia::render('Hr/Positions/Show', [
+            'position' => $position,
+            'applicationStats' => $applicationStats,
+            'analytics' => $analytics,
+            'isAdmin' => true,
+        ]);
     }
 
     /**

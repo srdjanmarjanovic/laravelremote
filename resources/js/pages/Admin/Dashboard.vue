@@ -377,10 +377,11 @@ const breadcrumbs = [
                     </CardHeader>
                     <CardContent>
                         <div v-if="recentPositions.length > 0" class="space-y-4">
-                            <div
+                            <Link
                                 v-for="position in recentPositions.slice(0, 5)"
                                 :key="position.id"
-                                class="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                                :href="admin.positions.show(position.id).url"
+                                class="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50 cursor-pointer"
                             >
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate font-medium">{{ position.title }}</p>
@@ -405,7 +406,7 @@ const breadcrumbs = [
                                         ⭐ Top
                                     </Badge>
                                 </div>
-                            </div>
+                            </Link>
                         </div>
                         <div v-else class="py-8 text-center text-muted-foreground">
                             <Briefcase class="mx-auto mb-2 h-8 w-8" />

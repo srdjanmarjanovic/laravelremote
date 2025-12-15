@@ -90,6 +90,7 @@ interface Position {
     expires_at: string | null;
     created_at: string;
     technologies: Technology[];
+    payment_status: 'paid' | 'pending' | 'failed' | 'refunded' | 'unpaid';
 }
 
 interface PaginatedPositions {
@@ -252,6 +253,21 @@ const getStatusColor = (status: string) => {
     return colors[status] || colors.draft;
 };
 
+const getPaymentStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+        paid: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        failed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+        refunded: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+        unpaid: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+    };
+    return colors[status] || colors.unpaid;
+};
+
+const formatPaymentStatus = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
 const formatDate = (date: string | null) => {
     if (!date) return '—';
     return new Date(date).toLocaleDateString('en-US', {
@@ -349,6 +365,7 @@ const breadcrumbs = [
                                 <TableHead>Position</TableHead>
                                 <TableHead>Company</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Payment Status</TableHead>
                                 <TableHead>Creator</TableHead>
                                 <TableHead class="text-center">Applications</TableHead>
                                 <TableHead>Created</TableHead>
@@ -361,7 +378,7 @@ const breadcrumbs = [
                                 v-if="props.positions.data.length === 0"
                                 class="hover:bg-transparent"
                             >
-                                <TableCell colspan="8" class="py-12 text-center">
+                                <TableCell colspan="9" class="py-12 text-center">
                                     <Building2 class="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                                     <p class="text-muted-foreground">No positions found</p>
                                     <p v-if="hasActiveFilters" class="mt-1 text-sm text-muted-foreground">
@@ -372,7 +389,8 @@ const breadcrumbs = [
                             <TableRow 
                                 v-for="position in props.positions.data" 
                                 :key="position.id"
-                                class="group"
+                                class="group cursor-pointer hover:bg-muted/50"
+                                @click="router.visit(admin.positions.show(position.id).url)"
                             >
                                 <TableCell>
                                     <div class="flex flex-col">
@@ -422,6 +440,11 @@ const breadcrumbs = [
                                     </div>
                                 </TableCell>
                                 <TableCell>
+                                    <Badge :class="getPaymentStatusColor(position.payment_status)">
+                                        {{ formatPaymentStatus(position.payment_status) }}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
                                     <div class="flex flex-col">
                                         <span class="text-sm">{{ position.creator.name }}</span>
                                         <span class="text-xs text-muted-foreground">{{ position.creator.email }}</span>
@@ -442,7 +465,7 @@ const breadcrumbs = [
                                         {{ formatDate(position.expires_at) }}
                                     </span>
                                 </TableCell>
-                                <TableCell class="text-right">
+                                <TableCell class="text-right" @click.stop>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
                                             <Button 

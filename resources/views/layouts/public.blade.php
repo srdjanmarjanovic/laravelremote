@@ -66,10 +66,10 @@
                         <a href="/positions" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             Browse Jobs
                         </a>
-                        <a href="#" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+                        <a href="/companies" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             Companies
                         </a>
-                        <a href="#" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+                        <a href="{{ route('about') }}" class="text-muted-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                             About
                         </a>
                     </div>
@@ -141,7 +141,7 @@
                 <div class="space-y-4">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Company</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">About</a></li>
+                        <li><a href="{{ route('about') }}" class="text-muted-foreground hover:text-primary transition-colors">About</a></li>
                         <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Blog</a></li>
                         <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Careers</a></li>
                     </ul>
@@ -159,20 +159,25 @@
                     <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">For Employers</h3>
                     <ul class="space-y-2">
                         <li><a href="/register" class="text-muted-foreground hover:text-primary transition-colors">Post a Job</a></li>
-                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Pricing</a></li>
+                        <li><a href="{{ route('pricing') }}" class="text-muted-foreground hover:text-primary transition-colors">Pricing</a></li>
                     </ul>
                 </div>
 
                 <div class="space-y-4">
                     <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">Legal</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Privacy</a></li>
-                        <li><a href="#" class="text-muted-foreground hover:text-primary transition-colors">Terms</a></li>
+                        <li><a href="{{ route('privacy') }}" class="text-muted-foreground hover:text-primary transition-colors">Privacy</a></li>
+                        <li><a href="{{ route('terms') }}" class="text-muted-foreground hover:text-primary transition-colors">Terms</a></li>
                     </ul>
                 </div>
             </div>
 
             <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-8">
+                <div class="text-center mb-4">
+                    <p class="text-gray-700 dark:text-gray-300 text-sm">
+                        If you have any issues or suggestions, please feel free to reach out at <a href="mailto:hello@laravelremote.com" class="text-primary hover:underline">hello@laravelremote.com</a>
+                    </p>
+                </div>
                 <p class="text-center text-gray-500 dark:text-gray-400 text-sm">
                     © {{ date('Y') }} RemoteLaravelJobs. All rights reserved.
                 </p>

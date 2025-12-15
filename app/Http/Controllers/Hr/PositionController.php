@@ -37,7 +37,10 @@ class PositionController extends Controller
         $query = Position::query()
             ->whereIn('company_id', $companyIds)
             ->with(['company', 'technologies', 'creator'])
-            ->withCount(['applications', 'views']);
+            ->withCount(['applications', 'views'])
+            ->with(['payments' => function ($q) {
+                $q->latest()->limit(1);
+            }]);
 
         // Apply search filter
         if (request('search')) {
@@ -67,6 +70,13 @@ class PositionController extends Controller
         }
 
         $positions = $query->latest()->paginate(15)->withQueryString();
+
+        // Add payment status to each position
+        $positions->getCollection()->transform(function ($position) {
+            $position->payment_status = $this->getPaymentStatus($position);
+
+            return $position;
+        });
 
         // Get all companies for filter dropdown
         $companies = $user->isAdmin()
@@ -435,5 +445,30 @@ class PositionController extends Controller
 
         return redirect()->back()
             ->with('message', $message);
+    }
+
+    /**
+     * Get payment status for a position.
+     */
+    private function getPaymentStatus(Position $position): string
+    {
+        // If paid_at is set, position is paid
+        if ($position->paid_at !== null) {
+            return 'paid';
+        }
+
+        // Check latest payment
+        $latestPayment = $position->payments->first();
+        if ($latestPayment) {
+            return match ($latestPayment->status->value) {
+                'completed' => 'paid',
+                'pending' => 'pending',
+                'failed' => 'failed',
+                'refunded' => 'refunded',
+                default => 'unpaid',
+            };
+        }
+
+        return 'unpaid';
     }
 }

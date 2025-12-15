@@ -66,6 +66,7 @@ interface Position {
     expires_at: string | null;
     created_at: string;
     technologies: Technology[];
+    payment_status: 'paid' | 'pending' | 'failed' | 'refunded' | 'unpaid';
 }
 
 interface PaginatedPositions {
@@ -148,6 +149,21 @@ const getStatusColor = (status: string) => {
         archived: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
     };
     return colors[status as keyof typeof colors] || colors.draft;
+};
+
+const getPaymentStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+        paid: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+        pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+        failed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+        refunded: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+        unpaid: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+    };
+    return colors[status] || colors.unpaid;
+};
+
+const formatPaymentStatus = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
 const formatDate = (date: string | null) => {
@@ -235,6 +251,7 @@ const breadcrumbs = [
                                 <TableHead>Position</TableHead>
                                 <TableHead>Company</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Payment Status</TableHead>
                                 <TableHead>Seniority</TableHead>
                                 <TableHead class="text-center">Applications</TableHead>
                                 <TableHead class="text-center">Views</TableHead>
@@ -247,7 +264,7 @@ const breadcrumbs = [
                                 v-if="props.positions.data.length === 0"
                                 class="hover:bg-transparent"
                             >
-                                <TableCell colspan="8" class="text-center text-gray-500">
+                                <TableCell colspan="9" class="text-center text-gray-500">
                                     No positions found. Create your first position to get started!
                                 </TableCell>
                             </TableRow>
@@ -296,6 +313,11 @@ const breadcrumbs = [
                                         class="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
                                     >
                                         Featured
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge :class="getPaymentStatusColor(position.payment_status)">
+                                        {{ formatPaymentStatus(position.payment_status) }}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
