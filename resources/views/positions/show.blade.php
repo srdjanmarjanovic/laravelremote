@@ -94,9 +94,19 @@ use App\Enums\ListingType;
                                         </svg>
                                         Edit Position
                                     </a>
-                                @elseif(auth()->user()->isDeveloper() || auth()->user()->isAdmin())
-                                    {{-- Developers and Admins see Apply Now --}}
-                                    @if($position->canReceiveApplications())
+                                @elseif(auth()->user()->isDeveloper())
+                                    {{-- Developers see Apply Now --}}
+                                    @if($hasApplied)
+                                        <div class="inline-flex flex-col items-end">
+                                            <span class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-not-allowed">
+                                                Already Applied
+                                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </span>
+                                            <p class="text-xs text-muted-foreground mt-1">You've already submitted an application for this position.</p>
+                                        </div>
+                                    @elseif($position->canReceiveApplications())
                                         <a href="{{ route('positions.apply', $position) }}" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
                                             Apply Now
                                             <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,6 +125,14 @@ use App\Enums\ListingType;
                                             Applications Closed
                                         </span>
                                     @endif
+                                @else
+                                    {{-- Non-developer authenticated users (admins, HR, etc.) --}}
+                                    <div class="inline-flex flex-col items-end">
+                                        <span class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-not-allowed">
+                                            Apply Now
+                                        </span>
+                                        <p class="text-xs text-muted-foreground mt-1">Only developers can apply to positions.</p>
+                                    </div>
                                 @endif
                             @else
                                 {{-- Visitors see Apply Now that redirects to login --}}
@@ -166,23 +184,6 @@ use App\Enums\ListingType;
                     </div>
                 </div>
 
-                <!-- Custom Questions Preview -->
-                @if($position->customQuestions->isNotEmpty())
-                    <div class="bg-card rounded-lg shadow p-8 border border-border transition-colors duration-300">
-                        <h2 class="text-2xl font-bold text-foreground mb-4">Application Questions</h2>
-                        <p class="text-muted-foreground mb-4">You'll be asked to answer these questions when applying:</p>
-                        <ol class="space-y-2 list-decimal list-inside text-muted-foreground">
-                            @foreach($position->customQuestions as $question)
-                                <li>
-                                    {{ $question->question_text }}
-                                    @if($question->is_required)
-                                        <span class="text-destructive">*</span>
-                                    @endif
-                                </li>
-                            @endforeach
-                        </ol>
-                    </div>
-                @endif
             </div>
 
             <!-- Sidebar -->

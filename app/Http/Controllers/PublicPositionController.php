@@ -98,7 +98,7 @@ class PublicPositionController extends Controller
     {
         $position = Position::where('slug', $slug)
             ->where('status', 'published')
-            ->with(['company', 'technologies', 'customQuestions'])
+            ->with(['company', 'technologies'])
             ->firstOrFail();
 
         // Track view (anonymized)
@@ -106,8 +106,17 @@ class PublicPositionController extends Controller
 
         $position->loadCount('applications');
 
+        // Check if authenticated user has already applied
+        $hasApplied = false;
+        if ($request->user()) {
+            $hasApplied = $position->applications()
+                ->where('user_id', $request->user()->id)
+                ->exists();
+        }
+
         return view('positions.show', [
             'position' => $position,
+            'hasApplied' => $hasApplied,
         ]);
     }
 

@@ -73,7 +73,7 @@ class ApplicationController extends Controller
         // Send notification to HR team members about new application
         $application->load(['position.company', 'user']);
         $position->load('company.users');
-        $hrUsers = $position->company->users()->where('role', 'hr')->get();
+        $hrUsers = $position->company->users()->where('users.role', 'hr')->get();
 
         if ($hrUsers->isNotEmpty()) {
             Notification::send($hrUsers, new NewApplicationNotification($application));

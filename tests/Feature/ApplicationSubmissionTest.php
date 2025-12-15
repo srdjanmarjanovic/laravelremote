@@ -52,7 +52,7 @@ describe('Application Submission - Apply Now Button Visibility', function () {
         $response->assertSee('Apply Now');
     });
 
-    it('shows Apply Now button for admins on platform applications', function () {
+    it('shows disabled Apply Now button for admins on platform applications', function () {
         $admin = User::factory()->admin()->create();
 
         actingAs($admin);
@@ -60,6 +60,10 @@ describe('Application Submission - Apply Now Button Visibility', function () {
 
         $response->assertSuccessful();
         $response->assertSee('Apply Now');
+        // Button should be disabled (cursor-not-allowed class indicates disabled state)
+        $response->assertSee('cursor-not-allowed');
+        // Should show explanation message
+        $response->assertSee('Only developers can apply to positions.');
     });
 
     it('shows Edit button for HR users who can manage the position', function () {
@@ -118,6 +122,24 @@ describe('Application Submission - Apply Now Button Visibility', function () {
 
         $response->assertSuccessful();
         $response->assertSee('Applications Closed');
+    });
+
+    it('shows Already Applied message for developers who have already applied', function () {
+        $developer = User::factory()->developer()->create();
+        DeveloperProfile::factory()->create(['user_id' => $developer->id]);
+
+        // Create existing application
+        Application::factory()->create([
+            'position_id' => $this->position->id,
+            'user_id' => $developer->id,
+        ]);
+
+        actingAs($developer);
+        $response = get(route('positions.show', $this->position->slug));
+
+        $response->assertSuccessful();
+        $response->assertSee('Already Applied');
+        $response->assertSee('already submitted an application');
     });
 });
 
