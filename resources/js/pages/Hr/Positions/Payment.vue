@@ -37,7 +37,7 @@ const tiers = [
         label: 'Regular',
         price: props.pricing.regular,
         description: 'Standard listing',
-        features: ['30 days visibility', 'Standard placement', 'Analytics Overview'],
+        features: ['30 days visibility', 'Standard placement', 'Analytics Overview', 'No company logo displayed'],
         icon: Check,
     },
     {
@@ -45,7 +45,7 @@ const tiers = [
         label: 'Featured',
         price: props.pricing.featured,
         description: 'Highlighted listing',
-        features: ['30 days visibility', 'Highlighted placement', 'Analytics Overview', 'Priority support', '⭐ Shown on homepage'],
+        features: ['30 days visibility', 'Highlighted placement', 'Analytics Overview', 'Priority support', '⭐ Shown on homepage', 'Company logo displayed'],
         icon: Sparkles,
         popular: true,
     },
@@ -54,7 +54,7 @@ const tiers = [
         label: 'Top',
         price: props.pricing.top,
         description: 'Maximum visibility',
-        features: ['30 days visibility', 'Pinned at top', 'Analytics Overview', 'Priority support', 'Featured badge', '⭐ Shown on homepage'],
+        features: ['30 days visibility', 'Pinned at top', 'Analytics Overview', 'Priority support', 'Featured badge', '⭐ Shown on homepage', 'Company logo displayed'],
         icon: Star,
     },
 ];

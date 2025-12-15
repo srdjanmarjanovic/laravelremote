@@ -9,7 +9,7 @@
         <div class="text-center mb-16">
             <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Simple, Transparent Pricing</h1>
             <p class="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Choose the perfect tier for your job posting. All plans include 30 days of visibility and access to qualified Laravel developers. <strong class="text-foreground">Featured and Top tiers are prominently displayed on our homepage</strong> for maximum exposure.
+                Choose the perfect tier for your job posting. All plans include 30 days of visibility and access to qualified Laravel developers. <strong class="text-foreground">Featured and Top tiers are prominently displayed on our homepage</strong> for maximum exposure. <strong class="text-foreground">All companies with active job listings automatically appear on our <a href="{{ route('companies.index') }}" class="text-primary hover:underline">companies page</a></strong> to help candidates discover your organization.
             </p>
         </div>
 
@@ -38,12 +38,6 @@
                             <span class="text-gray-700 dark:text-gray-300">Standard placement in listings</span>
                         </li>
                         <li class="flex items-start">
-                            <svg class="w-5 h-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            <span class="text-gray-500 dark:text-gray-400">Not shown on homepage</span>
-                        </li>
-                        <li class="flex items-start">
                             <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
@@ -54,6 +48,24 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
                             <span class="text-gray-700 dark:text-gray-300">Applicant Tracking System</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700 dark:text-gray-300">Company listed on <a href="{{ route('companies.index') }}" class="text-primary hover:underline">companies page</a></span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span class="text-gray-500 dark:text-gray-400">Not featured on homepage</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span class="text-gray-500 dark:text-gray-400">No company logo in the listing</span>
                         </li>
                     </ul>
                     <div class="mt-auto">
@@ -117,13 +129,25 @@
                             <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span class="text-gray-700 dark:text-gray-300">Priority support</span>
+                            <span class="text-gray-700 dark:text-gray-300">Standard support</span>
                         </li>
                         <li class="flex items-start">
                             <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
                             <span class="text-gray-700 dark:text-gray-300">Applicant Tracking System</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700 dark:text-gray-300">Company listed on <a href="{{ route('companies.index') }}" class="text-primary hover:underline">companies page</a></span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700 dark:text-gray-300">Company logo in the listing</span>
                         </li>
                     </ul>
                     <div class="mt-auto">
@@ -198,6 +222,18 @@
                             </svg>
                             <span class="text-gray-700 dark:text-gray-300">Applicant Tracking System</span>
                         </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700 dark:text-gray-300">Company listed on <a href="{{ route('companies.index') }}" class="text-primary hover:underline">companies page</a></span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-700 dark:text-gray-300">Company logo in the listing</span>
+                        </li>
                     </ul>
                     <div class="mt-auto">
                     @auth
@@ -241,11 +277,23 @@
                                 <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">{{ $duration_days }} days</td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">{{ $duration_days }} days</td>
                             </tr>
-                            <tr class="bg-gray-50 dark:bg-gray-700/50">
+                            <tr>
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Placement Priority</td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Standard</td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Highlighted</td>
-                                <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Pinned at Top</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">✓ Pinned at Top</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Applicant Tracking System</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Analytics</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓ Analytics Overview</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓ Analytics Overview</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓ Analytics Overview</td>
                             </tr>
                             <tr>
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Homepage Visibility</td>
@@ -254,25 +302,25 @@
                                 <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">✓ Featured</td>
                             </tr>
                             <tr>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Support</td>
+                                <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Standard</td>
+                                <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Standard</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">✓ Priority</td>
+                            </tr>
+                            <tr>
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Visual Badge</td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">—</td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">✓</td>
-                                <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">✓ Premium</td>
-                            </tr>
-                            <tr class="bg-gray-50 dark:bg-gray-700/50">
-                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Analytics</td>
-                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓ Analytics Overview</td>
-                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓ Analytics Overview</td>
-                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓ Analytics Overview</td>
+                                <td class="x-6 py-4 text-center text-sm text-green-600 dark:text-green-400 font-semibold">✓ Premium</td>
                             </tr>
                             <tr>
-                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Support</td>
-                                <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Standard</td>
-                                <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Priority</td>
-                                <td class="px-6 py-4 text-center text-sm text-gray-700 dark:text-gray-300">Priority</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Company Logo displayed in the listing</td>
+                                <td class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">—</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
+                                <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
                             </tr>
-                            <tr class="bg-gray-50 dark:bg-gray-700/50">
-                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Applicant Tracking System</td>
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">Company listed on <a href="{{ route('companies.index') }}" class="text-primary hover:underline">companies page</a></td>
                                 <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
                                 <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
                                 <td class="px-6 py-4 text-center text-sm text-green-600 dark:text-green-400">✓</td>
