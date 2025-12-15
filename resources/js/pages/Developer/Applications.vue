@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Head, Link } from '@inertiajs/vue3';
 import { Briefcase, Building2, Calendar, CheckCircle, Clock, MapPin, XCircle } from 'lucide-vue-next';
 import developer from '@/routes/developer';
+import positions from '@/routes/positions';
 
 interface Technology {
     id: number;
@@ -119,9 +120,9 @@ const breadcrumbs = [
                         Track your job applications and their status
                     </p>
                 </div>
-                <Link href="/positions">
+                <a :href="positions.index().url" class="inline-block">
                     <Button>Browse Positions</Button>
-                </Link>
+                </a>
             </div>
 
             <!-- Applications List -->

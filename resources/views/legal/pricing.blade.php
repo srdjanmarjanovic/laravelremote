@@ -13,6 +13,21 @@
             </p>
         </div>
 
+        <!-- Developer Free Notice -->
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-16 border-2 border-green-200 dark:border-green-800">
+            <div class="flex items-start gap-4">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Free for Developers</h2>
+                    <p class="text-gray-700 dark:text-gray-300">
+                        <strong class="text-foreground">The platform is completely free of any charges for developers.</strong> Browse job listings, apply to positions, and access all developer features at no cost. Only employers posting job listings are charged.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Pricing Cards -->
         <div class="grid md:grid-cols-3 gap-8 mb-16">
             <!-- Regular Tier -->

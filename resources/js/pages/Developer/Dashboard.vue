@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Head, Link } from '@inertiajs/vue3';
 import { Briefcase, CheckCircle, Clock, FileText, XCircle } from 'lucide-vue-next';
-import developer from '@/routes/developer' ;
+import developer from '@/routes/developer';
+import positions from '@/routes/positions';
 
 interface Application {
     id: number;
@@ -164,9 +165,9 @@ const breadcrumbs = [
                     <div v-else class="py-8 text-center text-muted-foreground">
                         <Briefcase class="mx-auto mb-2 h-8 w-8" />
                         <p>No applications yet</p>
-                        <Link href="/" class="mt-2">
+                        <a :href="positions.index().url" class="mt-2 inline-block">
                             <Button variant="link">Browse Positions</Button>
-                        </Link>
+                        </a>
                     </div>
                 </CardContent>
             </Card>
@@ -178,12 +179,12 @@ const breadcrumbs = [
                 </CardHeader>
                 <CardContent>
                     <div class="grid gap-2 md:grid-cols-3">
-                        <Link href="/">
+                        <a :href="positions.index().url" class="block">
                             <Button variant="outline" class="w-full">
                                 <Briefcase class="mr-2 h-4 w-4" />
                                 Browse Positions
                             </Button>
-                        </Link>
+                        </a>
                         <Link :href="developer.profile.edit().url">
                             <Button variant="outline" class="w-full">
                                 <FileText class="mr-2 h-4 w-4" />
