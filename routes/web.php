@@ -48,9 +48,9 @@ Route::get('/', function () {
             ->limit(6)
             ->get(),
         'popular_technologies' => \App\Models\Technology::query()
+            ->whereHas('positions')
             ->withCount('positions')
             ->orderByDesc('positions_count')
-            ->limit(12)
             ->get(),
     ]);
 })->name('home');
