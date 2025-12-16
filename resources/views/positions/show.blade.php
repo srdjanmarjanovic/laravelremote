@@ -100,12 +100,12 @@ use App\Enums\ListingType;
                                     @if($hasApplied)
                                         <div class="inline-flex flex-col items-end">
                                             <span class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-not-allowed">
-                                                Already Applied
+                                                Applied
                                                 <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             </span>
-                                            <p class="text-xs text-muted-foreground mt-1">You've already submitted an application for this position.</p>
+                                            <p class="text-xs text-muted-foreground mt-1">You've submitted an application for this position.</p>
                                         </div>
                                     @elseif($position->canReceiveApplications())
                                         <button 

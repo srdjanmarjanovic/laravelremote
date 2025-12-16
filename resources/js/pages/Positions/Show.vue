@@ -281,7 +281,7 @@ const isFeaturedListing = computed(() => props.position.listing_type === 'featur
                                             <span
                                                 class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-not-allowed"
                                             >
-                                                Already Applied
+                                                Applied
                                                 <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path
                                                         stroke-linecap="round"
@@ -292,7 +292,7 @@ const isFeaturedListing = computed(() => props.position.listing_type === 'featur
                                                 </svg>
                                             </span>
                                             <p class="text-xs text-muted-foreground mt-1">
-                                                You've already submitted an application for this position.
+                                                You've submitted an application for this position.
                                             </p>
                                         </div>
                                         <button
