@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Head, Link } from '@inertiajs/vue3';
-import { Briefcase, CheckCircle, Clock, FileText, XCircle } from 'lucide-vue-next';
+import { Briefcase, FileText } from 'lucide-vue-next';
 import developer from '@/routes/developer';
 import positions from '@/routes/positions';
 
@@ -16,7 +16,6 @@ interface Application {
             name: string;
         };
     };
-    status: string;
     applied_at: string;
 }
 
@@ -30,21 +29,8 @@ defineProps<{
     profile?: DeveloperProfile;
     stats?: {
         total_applications: number;
-        pending: number;
-        accepted: number;
-        rejected: number;
     };
 }>();
-
-const getStatusBadge = (status: string) => {
-    const variants = {
-        pending: { variant: 'secondary', icon: Clock, text: 'Pending' },
-        reviewing: { variant: 'default', icon: Clock, text: 'Reviewing' },
-        accepted: { variant: 'default', icon: CheckCircle, text: 'Accepted' },
-        rejected: { variant: 'destructive', icon: XCircle, text: 'Rejected' },
-    };
-    return variants[status] || variants.pending;
-};
 
 const breadcrumbs = [
     {
@@ -80,7 +66,7 @@ const breadcrumbs = [
             </Card>
 
             <!-- Stats Grid -->
-            <div class="grid gap-4 md:grid-cols-4">
+            <div class="grid gap-4 md:grid-cols-1">
                 <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">Total Applications</CardTitle>
@@ -88,36 +74,6 @@ const breadcrumbs = [
                     </CardHeader>
                     <CardContent>
                         <div class="text-2xl font-bold">{{ stats?.total_applications || 0 }}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium">Pending</CardTitle>
-                        <Clock class="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-2xl font-bold">{{ stats?.pending || 0 }}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium">Accepted</CardTitle>
-                        <CheckCircle class="h-4 w-4 text-green-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-2xl font-bold text-green-600">{{ stats?.accepted || 0 }}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium">Rejected</CardTitle>
-                        <XCircle class="h-4 w-4 text-red-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-2xl font-bold text-red-600">{{ stats?.rejected || 0 }}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -144,7 +100,7 @@ const breadcrumbs = [
                         >
                             <div class="space-y-1">
                                 <Link
-                                    :href="`/developer/applications/${application.id}`"
+                                    :href="`/positions/${application.position.slug || application.position.id}`"
                                     class="font-medium hover:underline"
                                 >
                                     {{ application.position.title }}
@@ -156,10 +112,6 @@ const breadcrumbs = [
                                     Applied {{ new Date(application.applied_at).toLocaleDateString() }}
                                 </p>
                             </div>
-                            <Badge :variant="getStatusBadge(application.status).variant">
-                                <component :is="getStatusBadge(application.status).icon" class="mr-1 h-3 w-3" />
-                                {{ getStatusBadge(application.status).text }}
-                            </Badge>
                         </div>
                     </div>
                     <div v-else class="py-8 text-center text-muted-foreground">
@@ -193,7 +145,7 @@ const breadcrumbs = [
                         </Link>
                         <Link :href="developer.applications.index().url">
                             <Button variant="outline" class="w-full">
-                                <CheckCircle class="mr-2 h-4 w-4" />
+                                <Briefcase class="mr-2 h-4 w-4" />
                                 View Applications
                             </Button>
                         </Link>

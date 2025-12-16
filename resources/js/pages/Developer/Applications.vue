@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Head, Link } from '@inertiajs/vue3';
-import { Briefcase, Building2, Calendar, CheckCircle, Clock, MapPin, XCircle } from 'lucide-vue-next';
+import { Briefcase, Building2, Calendar, MapPin } from 'lucide-vue-next';
 import developer from '@/routes/developer';
 import positions from '@/routes/positions';
 
@@ -34,7 +34,6 @@ interface Position {
 interface Application {
     id: number;
     position: Position;
-    status: string;
     applied_at: string;
 }
 
@@ -54,39 +53,6 @@ interface PaginatedApplications {
 const props = defineProps<{
     applications: PaginatedApplications;
 }>();
-
-const getStatusConfig = (status: string) => {
-    const configs: Record<
-        string,
-        { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: any; text: string; class: string }
-    > = {
-        pending: {
-            variant: 'secondary',
-            icon: Clock,
-            text: 'Pending',
-            class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-        },
-        reviewing: {
-            variant: 'default',
-            icon: Clock,
-            text: 'Reviewing',
-            class: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-        },
-        accepted: {
-            variant: 'default',
-            icon: CheckCircle,
-            text: 'Accepted',
-            class: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-        },
-        rejected: {
-            variant: 'destructive',
-            icon: XCircle,
-            text: 'Rejected',
-            class: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-        },
-    };
-    return configs[status] || configs.pending;
-};
 
 const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -117,7 +83,7 @@ const breadcrumbs = [
                 <div>
                     <h1 class="text-2xl font-bold">My Applications</h1>
                     <p class="text-sm text-muted-foreground">
-                        Track your job applications and their status
+                        Track your job applications
                     </p>
                 </div>
                 <a :href="positions.index().url" class="inline-block">
@@ -163,15 +129,6 @@ const breadcrumbs = [
                                         </span>
                                     </div>
                                 </CardDescription>
-                            </div>
-                            <div class="flex flex-col gap-2">
-                                <Badge
-                                    :class="getStatusConfig(application.status).class"
-                                    class="w-fit"
-                                >
-                                    <component :is="getStatusConfig(application.status).icon" class="mr-1 h-3 w-3" />
-                                    {{ getStatusConfig(application.status).text }}
-                                </Badge>
                             </div>
                         </div>
                     </CardHeader>

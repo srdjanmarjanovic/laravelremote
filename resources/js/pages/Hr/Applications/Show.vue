@@ -14,8 +14,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { FileText, Mail, Calendar, ChevronLeft, Save, Download } from 'lucide-vue-next';
 import hr from '@/routes/hr';
-import positions from '@/routes/positions';
-import developer from '@/routes/developer';
 
 interface User {
     id: number;
@@ -190,7 +188,7 @@ const breadcrumbs = [
                                 <!-- CV Download -->
                                 <div v-if="application.user.developer_profile?.cv_path">
                                     <a
-                                        :href="developer.profile.cv.download(application.user.id).url"
+                                        :href="hr.applications.cv.download(application.id).url"
                                         target="_blank"
                                     >
                                         <Button variant="outline" class="w-full">
@@ -306,8 +304,7 @@ const breadcrumbs = [
                                 </div>
 
                                 <Link
-                                    :href="positions.show(application.position.slug).url"
-                                    target="_blank"
+                                    :href="hr.positions.show(application.position.id).url"
                                 >
                                     <Button variant="outline" class="w-full">
                                         <FileText class="mr-2 h-4 w-4" />

@@ -8,8 +8,10 @@ use App\Models\Company;
 use App\Notifications\ApplicationStatusChangedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApplicationController extends Controller
 {
@@ -146,13 +148,41 @@ class ApplicationController extends Controller
             'reviewed_by_user_id' => auth()->id(),
         ]);
 
-        // Send notification to applicant about status change
+        // Send notification to applicant about status change (only if not a developer)
         if ($previousStatus !== $validated['status'] && ! $userArchived) {
             $application->refresh();
             $application->load(['position.company', 'user']);
-            $application->user->notify(new ApplicationStatusChangedNotification($application, $previousStatus));
+            // Don't send status change notifications to developers
+            if (! $application->user->isDeveloper()) {
+                $application->user->notify(new ApplicationStatusChangedNotification($application, $previousStatus));
+            }
         }
 
         return back()->with('message', 'Application status updated successfully.');
+    }
+
+    /**
+     * Download the applicant's CV.
+     */
+    public function downloadCv(Application $application): RedirectResponse|StreamedResponse
+    {
+        $this->authorize('view', $application);
+
+        $application->load('user.developerProfile');
+
+        $profile = $application->user->developerProfile;
+
+        if (! $profile || ! $profile->cv_path) {
+            return back()->with('error', 'CV not found.');
+        }
+
+        if (! Storage::disk('private')->exists($profile->cv_path)) {
+            return back()->with('error', 'CV file not found.');
+        }
+
+        return Storage::disk('private')->download(
+            $profile->cv_path,
+            $application->user->name.'-CV.'.pathinfo($profile->cv_path, PATHINFO_EXTENSION)
+        );
     }
 }

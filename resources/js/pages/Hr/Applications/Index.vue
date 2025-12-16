@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { ArchiveX, Eye } from 'lucide-vue-next';
+import { ArchiveX } from 'lucide-vue-next';
 import { ref } from 'vue';
 import hr from '@/routes/hr';
 import positions from '@/routes/positions';
@@ -213,8 +213,10 @@ const rejectApplication = (applicationId: number) => {
                                 v-for="application in props.applications.data"
                                 :key="application.id"
                                 :class="{
+                                    'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800': !application.user_archived,
                                     'cursor-not-allowed opacity-60': application.user_archived
                                 }"
+                                @click="!application.user_archived && router.visit(hr.applications.show(application.id).url)"
                             >
                                 <TableCell>
                                     <div class="flex flex-col">
@@ -235,7 +237,7 @@ const rejectApplication = (applicationId: number) => {
                                         </span>
                                     </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell @click.stop>
                                     <Link
                                         :href="positions.show(application.position.slug).url"
                                         target="_blank"
@@ -259,18 +261,9 @@ const rejectApplication = (applicationId: number) => {
                                         {{ formatDate(application.applied_at) }}
                                     </span>
                                 </TableCell>
-                                <TableCell class="text-right">
-                                    <Link
-                                        v-if="!application.user_archived"
-                                        :href="hr.applications.show(application.id).url"
-                                    >
-                                        <Button variant="ghost" size="sm">
-                                            <Eye class="mr-2 h-4 w-4" />
-                                            View
-                                        </Button>
-                                    </Link>
+                                <TableCell class="text-right" @click.stop>
                                     <Button
-                                        v-else-if="application.status !== 'rejected'"
+                                        v-if="application.status !== 'rejected' && application.user_archived"
                                         variant="ghost"
                                         size="sm"
                                         @click="rejectApplication(application.id)"
@@ -278,7 +271,7 @@ const rejectApplication = (applicationId: number) => {
                                         Move to rejected
                                     </Button>
                                     <span
-                                        v-else
+                                        v-else-if="application.user_archived"
                                         class="text-sm text-gray-500 dark:text-gray-400"
                                     >
                                         -

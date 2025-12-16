@@ -182,6 +182,7 @@ Route::middleware(['auth', 'verified', 'role:hr'])->prefix('hr')->name('hr.')->g
     Route::get('applications', [HrApplicationController::class, 'index'])->name('applications.index');
     Route::get('applications/{application}', [HrApplicationController::class, 'show'])->name('applications.show');
     Route::patch('applications/{application}', [HrApplicationController::class, 'update'])->name('applications.update');
+    Route::get('applications/{application}/cv/download', [HrApplicationController::class, 'downloadCv'])->name('applications.cv.download');
 });
 
 /*

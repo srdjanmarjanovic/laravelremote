@@ -138,8 +138,8 @@ describe('Application Submission - Apply Now Button Visibility', function () {
         $response = get(route('positions.show', $this->position->slug));
 
         $response->assertSuccessful();
-        $response->assertSee('Already Applied');
-        $response->assertSee('already submitted an application');
+        $response->assertSee('Applied');
+        $response->assertSee('submitted an application for this position');
     });
 });
 

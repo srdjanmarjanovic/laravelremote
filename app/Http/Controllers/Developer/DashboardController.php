@@ -18,19 +18,17 @@ class DashboardController extends Controller
         // Load developer profile
         $profile = $user->developerProfile;
 
-        // Get recent applications
+        // Get recent applications (without status field)
         $applications = $user->applications()
             ->with(['position.company'])
             ->latest('applied_at')
             ->limit(5)
-            ->get();
+            ->get()
+            ->makeHidden('status');
 
-        // Calculate stats
+        // Calculate stats (only total, no status breakdown)
         $stats = [
             'total_applications' => $user->applications()->count(),
-            'pending' => $user->applications()->where('status', 'pending')->count(),
-            'accepted' => $user->applications()->where('status', 'accepted')->count(),
-            'rejected' => $user->applications()->where('status', 'rejected')->count(),
         ];
 
         return Inertia::render('Developer/Dashboard', [

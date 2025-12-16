@@ -9,10 +9,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Bell, Check, CheckCheck } from 'lucide-vue-next';
-import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import { index, read, readAll } from '@/routes/notifications';
+import hrApplications from '@/routes/hr/applications';
+import developerApplications from '@/routes/developer/applications';
+import hrPositions from '@/routes/hr/positions';
+import adminPositions from '@/routes/admin/positions';
 
 interface Notification {
     id: string;
@@ -27,8 +31,16 @@ const auth = computed(() => page.props.auth);
 const user = computed(() => auth.value?.user);
 
 const notifications = ref<Notification[]>([]);
-const unreadCount = computed(() => notifications.value.filter(n => !n.read_at).length);
+const filteredNotifications = computed(() => {
+    // Filter out ApplicationStatusChanged notifications for developers
+    if (user.value?.role === 'developer') {
+        return notifications.value.filter(n => !n.type.includes('ApplicationStatusChanged'));
+    }
+    return notifications.value;
+});
+const unreadCount = computed(() => filteredNotifications.value.filter(n => !n.read_at).length);
 const isLoading = ref(false);
+let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 const fetchNotifications = async () => {
     if (!user.value) {
@@ -124,26 +136,34 @@ const getNotificationMessage = (notification: Notification): string => {
     return 'You have a new notification';
 };
 
-const getNotificationLink = (notification: Notification): string | null => {
+const handleNotificationClick = (notification: Notification) => {
     const type = notification.type;
     const data = notification.data;
+    let url: string | null = null;
 
     if (type.includes('NewApplication') && data.application_id) {
-        return `/hr/applications/${data.application_id}`;
-    }
-    if (type.includes('ApplicationStatusChanged') && data.application_id) {
-        return `/developer/applications/${data.application_id}`;
-    }
-    if (type.includes('Position') && data.position_id) {
-        if (user.value?.role === 'hr') {
-            return `/hr/positions/${data.position_id}`;
+        url = hrApplications.show(data.application_id).url;
+    } else if (type.includes('ApplicationStatusChanged') && data.application_id) {
+        // Don't navigate developers to application detail pages for status changes
+        if (user.value?.role !== 'developer') {
+            url = developerApplications.show(data.application_id).url;
         }
-        if (user.value?.role === 'admin') {
-            return `/admin/positions`;
+    } else if (type.includes('Position') && data.position_id) {
+        if (user.value?.role === 'hr') {
+            url = hrPositions.show(data.position_id).url;
+        } else if (user.value?.role === 'admin') {
+            url = adminPositions.index().url;
         }
     }
 
-    return null;
+    if (url) {
+        // Mark as read if unread
+        if (!notification.read_at) {
+            markAsRead(notification.id);
+        }
+        // Navigate to the page
+        router.visit(url);
+    }
 };
 
 const formatTime = (dateString: string): string => {
@@ -173,7 +193,13 @@ const formatTime = (dateString: string): string => {
 onMounted(() => {
     fetchNotifications();
     // Poll for new notifications every 30 seconds
-    setInterval(fetchNotifications, 30000);
+    pollInterval = setInterval(fetchNotifications, 30000);
+});
+
+onUnmounted(() => {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
 });
 </script>
 
@@ -214,56 +240,52 @@ onMounted(() => {
                 <div v-if="isLoading" class="p-4 text-center text-sm text-muted-foreground">
                     Loading...
                 </div>
-                <div v-else-if="notifications.length === 0" class="p-4 text-center text-sm text-muted-foreground">
+                <div v-else-if="filteredNotifications.length === 0" class="p-4 text-center text-sm text-muted-foreground">
                     No notifications
                 </div>
                 <template v-else>
                     <DropdownMenuItem
-                        v-for="notification in notifications"
+                        v-for="notification in filteredNotifications"
                         :key="notification.id"
-                        :as-child="true"
                         :class="[
                             'flex flex-col items-start gap-1 p-4 cursor-pointer',
                             !notification.read_at && 'bg-accent'
                         ]"
+                        @click="handleNotificationClick(notification)"
                     >
-                        <component
-                            :is="getNotificationLink(notification) ? Link : 'div'"
-                            :href="getNotificationLink(notification) || undefined"
-                            class="w-full"
-                            @click="!notification.read_at && markAsRead(notification.id)"
-                        >
-                            <div class="flex w-full items-start justify-between gap-2">
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium">
-                                        {{ getNotificationTitle(notification) }}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground mt-1">
-                                        {{ getNotificationMessage(notification) }}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground mt-1">
-                                        {{ formatTime(notification.created_at) }}
-                                    </p>
-                                </div>
-                                <Button
-                                    v-if="!notification.read_at"
-                                    variant="ghost"
-                                    size="icon"
-                                    class="h-6 w-6"
-                                    @click.stop="markAsRead(notification.id)"
-                                >
-                                    <Check class="h-3 w-3" />
-                                </Button>
+                        <div class="flex w-full items-start justify-between gap-2">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">
+                                    {{ getNotificationTitle(notification) }}
+                                </p>
+                                <p class="text-xs text-muted-foreground mt-1">
+                                    {{ getNotificationMessage(notification) }}
+                                </p>
+                                <p class="text-xs text-muted-foreground mt-1">
+                                    {{ formatTime(notification.created_at) }}
+                                </p>
                             </div>
-                        </component>
+                            <Button
+                                v-if="!notification.read_at"
+                                variant="ghost"
+                                size="icon"
+                                class="h-6 w-6"
+                                @click.stop="markAsRead(notification.id)"
+                            >
+                                <Check class="h-3 w-3" />
+                            </Button>
+                        </div>
                     </DropdownMenuItem>
                 </template>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem as-child>
-                <Link href="/notifications" class="w-full text-center text-sm">
+            <DropdownMenuItem
+                class="cursor-pointer"
+                @click="router.visit(index.url())"
+            >
+                <span class="w-full text-center text-sm">
                     View all notifications
-                </Link>
+                </span>
             </DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>

@@ -5,7 +5,6 @@ namespace App\Notifications;
 use App\Models\Application;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class NewApplicationNotification extends Notification implements ShouldQueue
@@ -26,22 +25,7 @@ class NewApplicationNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
-    }
-
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->subject('New Application: '.$this->application->position->title)
-            ->line('You have received a new application for your position.')
-            ->line("**Position:** {$this->application->position->title}")
-            ->line("**Applicant:** {$this->application->user->name}")
-            ->line("**Email:** {$this->application->user->email}")
-            ->action('View Application', route('hr.applications.show', $this->application->id))
-            ->line('Thank you for using our application!');
+        return ['database'];
     }
 
     /**

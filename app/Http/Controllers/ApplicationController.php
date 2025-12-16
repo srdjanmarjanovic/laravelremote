@@ -72,13 +72,21 @@ class ApplicationController extends Controller
             'applied_at' => now(),
         ]);
 
-        // Send notification to HR team members about new application
-        $application->load(['position.company', 'user']);
-        $position->load('company.users');
-        $hrUsers = $position->company->users()->where('users.role', 'hr')->get();
+        // Send in-app notification to HR user who posted the listing
+        $application->load(['position.company', 'user', 'position.creator']);
+        $position->load('creator');
 
-        if ($hrUsers->isNotEmpty()) {
-            Notification::send($hrUsers, new NewApplicationNotification($application));
+        // Notify the HR user who created the position, if they exist and are HR
+        if ($position->created_by_user_id && $position->creator && $position->creator->isHR()) {
+            $position->creator->notify(new NewApplicationNotification($application));
+        } else {
+            // Fallback: notify all HR users in the company if creator is not HR or doesn't exist
+            $position->load('company.users');
+            $hrUsers = $position->company->users()->where('users.role', 'hr')->get();
+
+            if ($hrUsers->isNotEmpty()) {
+                Notification::send($hrUsers, new NewApplicationNotification($application));
+            }
         }
 
         // Return JSON response for AJAX requests, redirect for regular requests
@@ -107,6 +115,13 @@ class ApplicationController extends Controller
             ->latest('applied_at')
             ->paginate(15);
 
+        // Hide status from developers
+        if ($user->isDeveloper()) {
+            $applications->getCollection()->transform(function ($application) {
+                return $application->makeHidden('status');
+            });
+        }
+
         return Inertia::render('Developer/Applications', [
             'applications' => $applications,
         ]);
@@ -125,6 +140,12 @@ class ApplicationController extends Controller
             'position.customQuestions',
             'reviewer',
         ]);
+
+        // Hide status from developers
+        $user = auth()->user();
+        if ($user->isDeveloper()) {
+            $application->makeHidden('status');
+        }
 
         return Inertia::render('Developer/ApplicationShow', [
             'application' => $application,

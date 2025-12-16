@@ -5,6 +5,7 @@ use App\Models\Company;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -100,4 +101,80 @@ test('admin cannot access hr routes without hr role', function () {
     $response = $this->actingAs($admin)->get(route('hr.applications.index'));
 
     $response->assertForbidden();
+});
+
+test('hr user can download applicant cv', function () {
+    Storage::fake('private');
+
+    $hrUser = User::factory()->create(['role' => 'hr']);
+    $company = Company::factory()->create();
+    $hrUser->companies()->attach($company->id, ['role' => 'owner', 'joined_at' => now()]);
+
+    $position = Position::factory()->create(['company_id' => $company->id]);
+    $developer = User::factory()->create(['role' => 'developer', 'name' => 'John Doe']);
+    $cvPath = 'cvs/test-cv.pdf';
+    Storage::disk('private')->put($cvPath, 'fake cv content');
+    $developer->developerProfile()->create([
+        'cv_path' => $cvPath,
+    ]);
+
+    $application = Application::factory()->create([
+        'position_id' => $position->id,
+        'user_id' => $developer->id,
+    ]);
+
+    $response = $this->actingAs($hrUser)->get(route('hr.applications.cv.download', $application));
+
+    $response->assertSuccessful();
+    $response->assertDownload('John Doe-CV.pdf');
+});
+
+test('hr user cannot download cv from applications they do not have access to', function () {
+    Storage::fake('private');
+
+    $hrUser = User::factory()->create(['role' => 'hr']);
+    $myCompany = Company::factory()->create();
+    $hrUser->companies()->attach($myCompany->id, ['role' => 'owner', 'joined_at' => now()]);
+
+    $otherCompany = Company::factory()->create();
+    $position = Position::factory()->create(['company_id' => $otherCompany->id]);
+    $developer = User::factory()->create(['role' => 'developer']);
+    $cvPath = 'cvs/test-cv.pdf';
+    Storage::disk('private')->put($cvPath, 'fake cv content');
+    $developer->developerProfile()->create([
+        'cv_path' => $cvPath,
+    ]);
+
+    $application = Application::factory()->create([
+        'position_id' => $position->id,
+        'user_id' => $developer->id,
+    ]);
+
+    $response = $this->actingAs($hrUser)->get(route('hr.applications.cv.download', $application));
+
+    $response->assertForbidden();
+});
+
+test('hr user gets error when cv does not exist', function () {
+    Storage::fake('private');
+
+    $hrUser = User::factory()->create(['role' => 'hr']);
+    $company = Company::factory()->create();
+    $hrUser->companies()->attach($company->id, ['role' => 'owner', 'joined_at' => now()]);
+
+    $position = Position::factory()->create(['company_id' => $company->id]);
+    $developer = User::factory()->create(['role' => 'developer']);
+    $developer->developerProfile()->create([
+        'cv_path' => null,
+    ]);
+
+    $application = Application::factory()->create([
+        'position_id' => $position->id,
+        'user_id' => $developer->id,
+    ]);
+
+    $response = $this->actingAs($hrUser)->get(route('hr.applications.cv.download', $application));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('error', 'CV not found.');
 });
