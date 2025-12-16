@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\DeveloperProfile;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,11 +21,19 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('settings/Profile', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+        $user = $request->user();
+        $data = [
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
-            'isSocialUser' => $request->user()->isSocialUser(),
-        ]);
+            'isSocialUser' => $user->isSocialUser(),
+        ];
+
+        // Load developer profile if user is a developer
+        if ($user->isDeveloper()) {
+            $data['developerProfile'] = $user->developerProfile ?? new DeveloperProfile;
+        }
+
+        return Inertia::render('settings/Profile', $data);
     }
 
     /**
@@ -32,13 +41,57 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Update user profile (name, email)
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        // Handle developer profile update if user is a developer
+        if ($user->isDeveloper() && isset($validated['developer_profile'])) {
+            $developerData = $validated['developer_profile'];
+            $profile = $user->developerProfile ?? new DeveloperProfile(['user_id' => $user->id]);
+
+            // Handle CV upload
+            if ($request->hasFile('developer_profile.cv')) {
+                // Delete old CV if exists
+                if ($profile->cv_path && Storage::disk('private')->exists($profile->cv_path)) {
+                    Storage::disk('private')->delete($profile->cv_path);
+                }
+
+                $cvPath = $request->file('developer_profile.cv')->store('cvs', 'private');
+                $developerData['cv_path'] = $cvPath;
+            }
+
+            // Handle profile photo upload
+            if ($request->hasFile('developer_profile.profile_photo')) {
+                // Delete old photo if exists
+                if ($profile->profile_photo_path && Storage::disk('public')->exists($profile->profile_photo_path)) {
+                    Storage::disk('public')->delete($profile->profile_photo_path);
+                }
+
+                $photoPath = $request->file('developer_profile.profile_photo')->store('profile-photos', 'public');
+                $developerData['profile_photo_path'] = $photoPath;
+            }
+
+            // Remove file inputs from data
+            unset($developerData['cv'], $developerData['profile_photo']);
+
+            if ($profile->exists) {
+                $profile->update($developerData);
+            } else {
+                $user->developerProfile()->create($developerData);
+            }
+        }
 
         return to_route('profile.edit');
     }

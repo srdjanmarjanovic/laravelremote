@@ -12,7 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Mail, Calendar, ChevronLeft, Save, Download } from 'lucide-vue-next';
+import { FileText, Mail, Calendar, ChevronLeft, Save, Download, ExternalLink } from 'lucide-vue-next';
 import hr from '@/routes/hr';
 
 interface User {
@@ -157,30 +157,33 @@ const breadcrumbs = [
                                     <h4 class="font-medium text-gray-900 dark:text-gray-100">
                                         Professional Links
                                     </h4>
-                                    <div class="flex flex-wrap gap-2">
+                                    <div class="flex flex-wrap gap-4">
                                         <a
                                             v-if="application.user.developer_profile.github_url"
                                             :href="application.user.developer_profile.github_url"
                                             target="_blank"
-                                            class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                            class="inline-flex items-center gap-1 text-sm text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                         >
                                             GitHub
+                                            <ExternalLink class="h-3 w-3" />
                                         </a>
                                         <a
                                             v-if="application.user.developer_profile.linkedin_url"
                                             :href="application.user.developer_profile.linkedin_url"
                                             target="_blank"
-                                            class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                            class="inline-flex items-center gap-1 text-sm text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                         >
                                             LinkedIn
+                                            <ExternalLink class="h-3 w-3" />
                                         </a>
                                         <a
                                             v-if="application.user.developer_profile.portfolio_url"
                                             :href="application.user.developer_profile.portfolio_url"
                                             target="_blank"
-                                            class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                            class="inline-flex items-center gap-1 text-sm text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                         >
                                             Portfolio
+                                            <ExternalLink class="h-3 w-3" />
                                         </a>
                                     </div>
                                 </div>

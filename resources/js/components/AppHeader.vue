@@ -28,6 +28,7 @@ import { getInitials } from '@/composables/useInitials';
 import { toUrl, urlIsActive } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import hr from '@/routes/hr';
+import { edit as editProfile } from '@/routes/profile';
 import developer from '@/routes/developer';
 import admin from '@/routes/admin';
 import type { BreadcrumbItem, NavItem } from '@/types';
@@ -95,7 +96,7 @@ const mainNavItems = computed((): NavItem[] => {
             },
             {
                 title: 'Profile',
-                href: developer.profile.edit().url,
+                href: editProfile().url,
                 icon: Users,
             }
         );

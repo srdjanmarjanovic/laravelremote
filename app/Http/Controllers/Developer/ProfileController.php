@@ -14,16 +14,11 @@ class ProfileController extends Controller
 {
     /**
      * Show the form for editing the developer profile.
+     * Redirects to settings/profile for unified profile management.
      */
-    public function edit(): Response
+    public function edit(): RedirectResponse
     {
-        $user = auth()->user();
-
-        $profile = $user->developerProfile ?? new DeveloperProfile;
-
-        return Inertia::render('Developer/Profile', [
-            'profile' => $profile,
-        ]);
+        return redirect()->route('profile.edit');
     }
 
     /**

@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue';
 import ApplicationReviewModal from '@/components/ApplicationReviewModal.vue';
 import positions from '@/routes/positions';
 import developer from '@/routes/developer';
+import { edit as editProfile } from '@/routes/profile';
 
 interface Technology {
     id: number;
@@ -88,7 +89,7 @@ const handleModalClose = () => {
             :open="modalOpen"
             :position="position"
             :user="user"
-            :profile-url="developer.profile.edit().url"
+            :profile-url="editProfile().url"
             @update:open="handleModalClose"
         />
     </div>

@@ -15,6 +15,7 @@ import { dashboard } from '@/routes';
 import hr from '@/routes/hr';
 import developer from '@/routes/developer';
 import admin from '@/routes/admin';
+import { edit as editProfile } from '@/routes/profile';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { LayoutGrid, Briefcase, Users, FileText, Building2, Code } from 'lucide-vue-next';
@@ -60,7 +61,7 @@ const mainNavItems = computed((): NavItem[] => {
             },
             {
                 title: 'Profile',
-                href: developer.profile.edit().url,
+                href: editProfile().url,
                 icon: Users,
             }
         );

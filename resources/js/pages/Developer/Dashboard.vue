@@ -7,6 +7,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { Briefcase, FileText } from 'lucide-vue-next';
 import developer from '@/routes/developer';
 import positions from '@/routes/positions';
+import { edit as editProfile } from '@/routes/profile';
 
 interface Application {
     id: number;
@@ -47,6 +48,35 @@ const breadcrumbs = [
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
             <h1 class="text-2xl font-bold">Developer Dashboard</h1>
 
+            <!-- Quick Actions -->
+            <Card>
+                <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="grid gap-2 md:grid-cols-3">
+                        <a :href="positions.index().url" class="block">
+                            <Button variant="outline" class="w-full">
+                                <Briefcase class="mr-2 h-4 w-4" />
+                                Browse Positions
+                            </Button>
+                        </a>
+                        <Link :href="editProfile().url">
+                            <Button variant="outline" class="w-full">
+                                <FileText class="mr-2 h-4 w-4" />
+                                Update Profile
+                            </Button>
+                        </Link>
+                        <Link :href="developer.applications.index().url">
+                            <Button variant="outline" class="w-full">
+                                <Briefcase class="mr-2 h-4 w-4" />
+                                View Applications
+                            </Button>
+                        </Link>
+                    </div>
+                </CardContent>
+            </Card>
+
             <!-- Profile Completion Alert -->
             <Card v-if="!profile?.summary || !profile?.cv_path" class="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
                 <CardHeader>
@@ -59,7 +89,7 @@ const breadcrumbs = [
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Link :href="developer.profile.edit().url">
+                    <Link :href="editProfile().url">
                         <Button>Complete Profile</Button>
                     </Link>
                 </CardContent>
@@ -120,35 +150,6 @@ const breadcrumbs = [
                         <a :href="positions.index().url" class="mt-2 inline-block">
                             <Button variant="link">Browse Positions</Button>
                         </a>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <!-- Quick Actions -->
-            <Card>
-                <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div class="grid gap-2 md:grid-cols-3">
-                        <a :href="positions.index().url" class="block">
-                            <Button variant="outline" class="w-full">
-                                <Briefcase class="mr-2 h-4 w-4" />
-                                Browse Positions
-                            </Button>
-                        </a>
-                        <Link :href="developer.profile.edit().url">
-                            <Button variant="outline" class="w-full">
-                                <FileText class="mr-2 h-4 w-4" />
-                                Update Profile
-                            </Button>
-                        </Link>
-                        <Link :href="developer.applications.index().url">
-                            <Button variant="outline" class="w-full">
-                                <Briefcase class="mr-2 h-4 w-4" />
-                                View Applications
-                            </Button>
-                        </Link>
                     </div>
                 </CardContent>
             </Card>
