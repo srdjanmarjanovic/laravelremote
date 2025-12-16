@@ -73,19 +73,24 @@ onMounted(() => {
 const handleModalClose = () => {
     modalOpen.value = false;
     // Navigate back to position show page when modal closes
-    router.visit(positions.show(props.position.slug).url);
+    // Use a small delay to allow the modal close animation to complete
+    setTimeout(() => {
+        router.visit(positions.show(props.position.slug).url);
+    }, 150);
 };
 </script>
 
 <template>
     <Head :title="`Apply to ${position.title}`" />
 
-    <ApplicationReviewModal
-        :open="modalOpen"
-        :position="position"
-        :user="user"
-        :profile-url="developer.profile.edit().url"
-        @update:open="handleModalClose"
-    />
+    <div class="fixed inset-0 z-50 bg-black/80">
+        <ApplicationReviewModal
+            :open="modalOpen"
+            :position="position"
+            :user="user"
+            :profile-url="developer.profile.edit().url"
+            @update:open="handleModalClose"
+        />
+    </div>
 </template>
 

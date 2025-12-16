@@ -8,7 +8,8 @@ use App\Enums\ListingType;
 @section('description', $position->short_description)
 
 @section('content')
-<div class="bg-muted min-h-screen transition-colors duration-300">
+<div class="bg-muted min-h-screen transition-colors duration-300" 
+     x-data="applicationModal">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Back Button -->
         <button onclick="history.back()" class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors cursor-pointer">
@@ -107,12 +108,14 @@ use App\Enums\ListingType;
                                             <p class="text-xs text-muted-foreground mt-1">You've already submitted an application for this position.</p>
                                         </div>
                                     @elseif($position->canReceiveApplications())
-                                        <a href="{{ route('positions.apply', $position) }}" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
+                                        <button 
+                                            @click="applicationModalOpen = true" 
+                                            class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
                                             Apply Now
                                             <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                             </svg>
-                                        </a>
+                                        </button>
                                     @elseif($position->is_external)
                                         <a href="{{ $position->external_apply_url }}" target="_blank" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
                                             Apply
@@ -284,6 +287,394 @@ use App\Enums\ListingType;
             </div>
         </div>
     </div>
+
+    <!-- Application Modal -->
+    @auth
+        @if($user && $user->isDeveloper() && !$hasApplied && $position->canReceiveApplications())
+            <!-- Modal Overlay -->
+            <div x-show="applicationModalOpen" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click.self="closeModal()"
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                 style="display: none;">
+                
+                <!-- Modal Content -->
+                <div x-show="applicationModalOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     @click.self.stop
+                     class="bg-card rounded-lg shadow-lg border border-border w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                    
+                    <!-- Modal Header -->
+                    <div class="p-6 border-b border-border">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-bold text-foreground">Review Your Application</h2>
+                                <p class="text-sm text-muted-foreground mt-1">
+                                    Review your profile information and answer any additional questions before submitting your application.
+                                </p>
+                            </div>
+                            <button @click="closeModal()" 
+                                    :disabled="processing"
+                                    class="text-muted-foreground hover:text-foreground transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-6 space-y-6">
+                        <!-- Profile Information Card -->
+                        <div class="bg-muted rounded-lg p-6 border border-border">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-foreground">Your Profile</h3>
+                                    <p class="text-sm text-muted-foreground">This information will be shared with the employer</p>
+                                </div>
+                                <a href="{{ route('developer.profile.edit') }}" target="_blank" 
+                                   class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit Profile
+                                </a>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Basic Info -->
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div class="flex items-start gap-3">
+                                        <svg class="w-4 h-4 mt-1 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-muted-foreground">Name</p>
+                                            <p class="text-sm text-foreground">{{ $user->name }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <svg class="w-4 h-4 mt-1 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-muted-foreground">Email</p>
+                                            <p class="text-sm text-foreground">{{ $user->email }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if($user->developerProfile)
+                                    <div class="border-t border-border pt-4"></div>
+
+                                    <!-- Summary -->
+                                    @if($user->developerProfile->summary)
+                                        <div>
+                                            <p class="text-sm font-medium text-muted-foreground mb-1">Summary</p>
+                                            <p class="text-sm text-foreground">{{ $user->developerProfile->summary }}</p>
+                                        </div>
+                                    @endif
+
+                                    <!-- CV -->
+                                    @if($user->developerProfile->cv_path)
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <span class="text-sm text-foreground">CV attached</span>
+                                            <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Available
+                                            </span>
+                                            <a href="{{ route('developer.profile.cv.download') }}" 
+                                               target="_blank"
+                                               class="ml-auto inline-flex items-center px-3 py-1 text-sm text-primary hover:underline">
+                                                Review CV
+                                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    @endif
+
+                                    <!-- Links -->
+                                    @if($user->developerProfile->github_url || $user->developerProfile->linkedin_url || $user->developerProfile->portfolio_url)
+                                        <div>
+                                            <p class="text-sm font-medium text-muted-foreground mb-2">Links</p>
+                                            <div class="flex flex-wrap gap-2">
+                                                @if($user->developerProfile->github_url)
+                                                    <a href="{{ $user->developerProfile->github_url }}" target="_blank" 
+                                                       class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                        </svg>
+                                                        GitHub
+                                                    </a>
+                                                @endif
+                                                @if($user->developerProfile->linkedin_url)
+                                                    <a href="{{ $user->developerProfile->linkedin_url }}" target="_blank" 
+                                                       class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                        </svg>
+                                                        LinkedIn
+                                                    </a>
+                                                @endif
+                                                @if($user->developerProfile->portfolio_url)
+                                                    <a href="{{ $user->developerProfile->portfolio_url }}" target="_blank" 
+                                                       class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                        </svg>
+                                                        Portfolio
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Custom Questions -->
+                        @if($position->customQuestions->isNotEmpty())
+                            <div class="bg-muted rounded-lg p-6 border border-border">
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground">Additional Questions</h3>
+                                    <p class="text-sm text-muted-foreground">Please answer the following questions from the employer</p>
+                                </div>
+                                <div class="space-y-6">
+                                    @foreach($position->customQuestions as $question)
+                                        <div class="space-y-2">
+                                            <label for="question-{{ $question->id }}" class="flex items-center gap-2 text-sm font-medium text-foreground">
+                                                {{ $question->question_text }}
+                                                @if($question->is_required)
+                                                    <span class="text-red-500">*</span>
+                                                @endif
+                                            </label>
+                                            <textarea 
+                                                id="question-{{ $question->id }}"
+                                                x-model="customAnswers[{{ $question->id }}]"
+                                                :disabled="processing"
+                                                placeholder="{{ $question->is_required ? 'Your answer (required)' : 'Your answer (optional)' }}"
+                                                rows="4"
+                                                maxlength="2000"
+                                                class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"></textarea>
+                                            <p class="text-xs text-muted-foreground">Maximum 2000 characters</p>
+                                            <template x-if="errors['custom_answers.{{ $question->id }}']">
+                                                <p class="text-sm text-red-600 dark:text-red-400" x-text="errors['custom_answers.{{ $question->id }}']"></p>
+                                            </template>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <!-- Info Alert -->
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start gap-3">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-sm text-blue-800 dark:text-blue-200">
+                                    This position does not require any additional information. Click "Submit Application" to complete your application.
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="p-6 border-t border-border flex items-center justify-end gap-3">
+                        <button @click="closeModal()" 
+                                :disabled="processing"
+                                class="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-muted text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            Cancel
+                        </button>
+                        <button @click="submitApplication()" 
+                                :disabled="processing"
+                                class="px-4 py-2 text-sm font-medium rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="!processing">Submit Application</span>
+                            <span x-show="processing">Submitting...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endauth
+
+    <!-- Toast Notification -->
+    <div id="toast" 
+         class="fixed top-4 right-4 z-50 hidden transform transition-all duration-300"
+         x-cloak>
+        <div id="toast-type" class="rounded-lg shadow-lg p-4 min-w-[300px] max-w-md">
+            <div class="flex items-center gap-3">
+                <svg id="toast-icon-success" class="w-5 h-5 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg id="toast-icon-error" class="w-5 h-5 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <p id="toast-message" class="text-sm font-medium text-white flex-1"></p>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slide-out {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        .animate-slide-in {
+            animation: slide-in 0.3s ease-out;
+        }
+        .animate-slide-out {
+            animation: slide-out 0.3s ease-in;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('applicationModal', () => ({
+                applicationModalOpen: false,
+                processing: false,
+                errors: {},
+                customAnswers: @json($position->customQuestions->mapWithKeys(fn($q) => [$q->id => ''])->toArray()),
+                
+                showToast(message, type = 'success') {
+                    const toast = document.getElementById('toast');
+                    const toastMessage = document.getElementById('toast-message');
+                    const toastType = document.getElementById('toast-type');
+                    const toastIconSuccess = document.getElementById('toast-icon-success');
+                    const toastIconError = document.getElementById('toast-icon-error');
+                    
+                    toastMessage.textContent = message;
+                    toastType.className = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+                    
+                    if (type === 'success') {
+                        toastIconSuccess.classList.remove('hidden');
+                        toastIconError.classList.add('hidden');
+                    } else {
+                        toastIconSuccess.classList.add('hidden');
+                        toastIconError.classList.remove('hidden');
+                    }
+                    
+                    toast.classList.remove('hidden');
+                    toast.classList.add('animate-slide-in');
+                    
+                    setTimeout(() => {
+                        toast.classList.remove('animate-slide-in');
+                        toast.classList.add('animate-slide-out');
+                        setTimeout(() => {
+                            toast.classList.add('hidden');
+                            toast.classList.remove('animate-slide-out');
+                        }, 300);
+                    }, 4000);
+                },
+                
+                async submitApplication() {
+                    this.processing = true;
+                    this.errors = {};
+                    
+                    const formData = {
+                        custom_answers: this.customAnswers,
+                        _token: document.querySelector('meta[name="csrf-token"]').content
+                    };
+                    
+                    try {
+                        const response = await fetch('{{ route('positions.apply.store', $position) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': formData._token,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const contentType = response.headers.get('content-type');
+                        
+                        if (!contentType || !contentType.includes('application/json')) {
+                            if (response.ok) {
+                                this.showToast('Your application has been submitted successfully!', 'success');
+                                this.applicationModalOpen = false;
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 500);
+                                return;
+                            } else {
+                                throw new Error('Server returned non-JSON response');
+                            }
+                        }
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.success) {
+                            this.showToast(data.message || 'Your application has been submitted successfully!', 'success');
+                            this.applicationModalOpen = false;
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 500);
+                        } else {
+                            if (data.errors) {
+                                const flattenedErrors = {};
+                                Object.keys(data.errors).forEach(key => {
+                                    if (Array.isArray(data.errors[key])) {
+                                        flattenedErrors[key] = data.errors[key][0];
+                                    } else {
+                                        flattenedErrors[key] = data.errors[key];
+                                    }
+                                });
+                                this.errors = flattenedErrors;
+                                this.showToast('Please check the form for errors.', 'error');
+                            } else {
+                                this.showToast(data.message || 'There was an error submitting your application.', 'error');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        this.showToast('There was an error submitting your application. Please try again.', 'error');
+                    } finally {
+                        this.processing = false;
+                    }
+                },
+                
+                closeModal() {
+                    if (!this.processing) {
+                        this.applicationModalOpen = false;
+                        this.errors = {};
+                        this.customAnswers = @json($position->customQuestions->mapWithKeys(fn($q) => [$q->id => ''])->toArray());
+                    }
+                }
+            }));
+        });
+    </script>
 </div>
 @endsection
 

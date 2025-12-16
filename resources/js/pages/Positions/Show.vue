@@ -1,0 +1,535 @@
+<script setup lang="ts">
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import ApplicationReviewModal from '@/components/ApplicationReviewModal.vue';
+import positions from '@/routes/positions';
+import developer from '@/routes/developer';
+import { login } from '@/routes';
+
+interface Technology {
+    id: number;
+    name: string;
+    slug: string;
+}
+
+interface Company {
+    id: number;
+    name: string;
+    logo?: string;
+    description?: string;
+    website?: string;
+    social_links?: {
+        twitter?: string;
+        linkedin?: string;
+        github?: string;
+    };
+}
+
+interface Position {
+    id: number;
+    title: string;
+    slug: string;
+    short_description: string;
+    long_description: string;
+    seniority?: string;
+    salary_min?: number;
+    salary_max?: number;
+    remote_type: string;
+    location_restriction?: string;
+    listing_type: string;
+    status: string;
+    published_at: string | null;
+    expires_at?: string | null;
+    allow_platform_applications: boolean;
+    is_external: boolean;
+    external_apply_url?: string | null;
+    company: Company;
+    technologies: Technology[];
+    custom_questions?: Array<{
+        id: number;
+        question_text: string;
+        is_required: boolean;
+        order: number;
+    }>;
+}
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    developer_profile?: {
+        summary: string | null;
+        cv_path: string | null;
+        github_url: string | null;
+        linkedin_url: string | null;
+        portfolio_url: string | null;
+        other_links?: string[] | null;
+    } | null;
+}
+
+const props = defineProps<{
+    position: Position;
+    hasApplied: boolean;
+}>();
+
+const page = usePage();
+
+const user = computed(() => page.props.auth?.user as User | undefined);
+
+const isDeveloper = computed(() => user.value?.role === 'developer');
+const isHR = computed(() => user.value?.role === 'hr');
+const canManagePosition = computed(() => {
+    // This would need to be passed from the backend or computed
+    return false; // Simplified for now
+});
+
+const canReceiveApplications = computed(() => {
+    return (
+        props.position.status === 'published' &&
+        props.position.published_at &&
+        (!props.position.expires_at || new Date(props.position.expires_at) > new Date()) &&
+        props.position.allow_platform_applications &&
+        !props.position.is_external
+    );
+});
+
+const openApplyModal = async () => {
+    if (!user.value) {
+        router.visit(login().url + '?redirect=' + encodeURIComponent(positions.apply(props.position.slug).url));
+        return;
+    }
+
+    // Navigate to apply route which will show the modal overlay
+    router.visit(positions.apply(props.position.slug).url);
+};
+
+
+const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        const btn = document.getElementById('copy-link-btn');
+        const copyIcon = document.getElementById('copy-icon');
+        const checkIcon = document.getElementById('check-icon');
+        const label = document.getElementById('btn-label');
+
+        if (btn && copyIcon && checkIcon && label) {
+            copyIcon.classList.add('hidden');
+            checkIcon.classList.remove('hidden');
+            label.textContent = 'Copied!';
+            btn.classList.add('bg-green-500/20', 'text-green-600', 'dark:text-green-400');
+            btn.classList.remove('bg-muted');
+
+            setTimeout(() => {
+                copyIcon.classList.remove('hidden');
+                checkIcon.classList.add('hidden');
+                label.textContent = 'Copy Link';
+                btn.classList.remove('bg-green-500/20', 'text-green-600', 'dark:text-green-400');
+                btn.classList.add('bg-muted');
+            }, 2000);
+        }
+    });
+};
+
+const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        timeZoneName: 'short',
+    });
+};
+
+const isTopListing = computed(() => props.position.listing_type === 'top');
+const isFeaturedListing = computed(() => props.position.listing_type === 'featured');
+</script>
+
+<template>
+    <Head :title="`${position.title} at ${position.company.name}`" :description="position.short_description" />
+
+    <div class="bg-muted min-h-screen transition-colors duration-300">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Back Button -->
+            <button
+                @click="router.visit(positions.index().url)"
+                class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors cursor-pointer"
+            >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to all positions
+            </button>
+
+            <!-- Position Header Card -->
+            <div
+                :class="[
+                    'rounded-lg shadow-lg p-8 mb-6 transition-colors duration-300',
+                    (isTopListing || isFeaturedListing)
+                        ? 'border-2 border-primary bg-gradient-to-br from-primary/10 via-primary/5 to-card shadow-lg shadow-primary/30'
+                        : 'bg-card border border-border',
+                ]"
+            >
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Company Logo -->
+                    <img
+                        v-if="position.company.logo"
+                        :src="`/storage/${position.company.logo}`"
+                        :alt="position.company.name"
+                        class="w-20 h-20 rounded-lg object-cover"
+                    />
+                    <div
+                        v-else
+                        class="w-20 h-20 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold text-2xl"
+                    >
+                        {{ position.company.name.charAt(0) }}
+                    </div>
+
+                    <!-- Header Info -->
+                    <div class="flex-1">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <h1 :class="[isTopListing ? 'text-5xl' : 'text-3xl', 'font-bold text-foreground']">
+                                        {{ position.title }}
+                                    </h1>
+                                    <span
+                                        v-if="isTopListing"
+                                        class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary"
+                                    >
+                                        ⭐ Top
+                                    </span>
+                                </div>
+                                <p class="text-xl text-muted-foreground mb-4">{{ position.company.name }}</p>
+
+                                <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                                    <span v-if="position.seniority" class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                            />
+                                        </svg>
+                                        {{ position.seniority.charAt(0).toUpperCase() + position.seniority.slice(1) }}
+                                    </span>
+
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                            />
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                            />
+                                        </svg>
+                                        <strong v-if="position.remote_type === 'global'">Global</strong>
+                                        <span v-else>{{ position.location_restriction }}</span>
+                                    </span>
+
+                                    <span
+                                        v-if="position.salary_min && position.salary_max"
+                                        class="flex items-center gap-1"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
+                                        </svg>
+                                        ${{ position.salary_min.toLocaleString() }} - ${{ position.salary_max.toLocaleString() }}
+                                    </span>
+
+                                    <span class="text-muted-foreground" :title="formatDate(position.published_at)">
+                                        Posted {{ new Date(position.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Apply Button -->
+                            <div class="flex-shrink-0">
+                                <template v-if="user">
+                                    <template v-if="isHR && canManagePosition">
+                                        <!-- HR users see Edit button -->
+                                        <a
+                                            :href="`/hr/positions/${position.id}/edit`"
+                                            class="inline-flex items-center px-6 py-3 bg-secondary hover:bg-secondary/90 text-secondary-foreground font-medium rounded-lg transition-colors"
+                                        >
+                                            <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                                />
+                                            </svg>
+                                            Edit Position
+                                        </a>
+                                    </template>
+                                    <template v-else-if="isDeveloper">
+                                        <!-- Developers see Apply Now -->
+                                        <div v-if="hasApplied" class="inline-flex flex-col items-end">
+                                            <span
+                                                class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-not-allowed"
+                                            >
+                                                Already Applied
+                                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M5 13l4 4L19 7"
+                                                    />
+                                                </svg>
+                                            </span>
+                                            <p class="text-xs text-muted-foreground mt-1">
+                                                You've already submitted an application for this position.
+                                            </p>
+                                        </div>
+                                        <button
+                                            v-else-if="canReceiveApplications"
+                                            @click="openApplyModal"
+                                            class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors"
+                                        >
+                                            Apply Now
+                                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M9 5l7 7-7 7"
+                                                />
+                                            </svg>
+                                        </button>
+                                        <a
+                                            v-else-if="position.is_external"
+                                            :href="position.external_apply_url"
+                                            target="_blank"
+                                            class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors"
+                                        >
+                                            Apply
+                                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                                />
+                                            </svg>
+                                        </a>
+                                        <span
+                                            v-else
+                                            class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg"
+                                        >
+                                            Applications Closed
+                                        </span>
+                                    </template>
+                                    <template v-else>
+                                        <!-- Non-developer authenticated users -->
+                                        <div class="inline-flex flex-col items-end">
+                                            <span
+                                                class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg cursor-not-allowed"
+                                            >
+                                                Apply Now
+                                            </span>
+                                            <p class="text-xs text-muted-foreground mt-1">Only developers can apply to positions.</p>
+                                        </div>
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    <!-- Visitors see Apply Now that redirects to login -->
+                                    <a
+                                        v-if="canReceiveApplications"
+                                        :href="login().url + '?redirect=' + encodeURIComponent(positions.apply(position.slug).url)"
+                                        class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors"
+                                    >
+                                        Apply Now
+                                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M9 5l7 7-7 7"
+                                            />
+                                        </svg>
+                                    </a>
+                                    <a
+                                        v-else-if="position.is_external"
+                                        :href="position.external_apply_url"
+                                        target="_blank"
+                                        class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors"
+                                    >
+                                        Apply
+                                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                            />
+                                        </svg>
+                                    </a>
+                                    <span
+                                        v-else
+                                        class="inline-flex items-center px-6 py-3 bg-muted text-muted-foreground font-medium rounded-lg"
+                                    >
+                                        Applications Closed
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Technologies -->
+                        <div v-if="position.technologies.length > 0" class="mt-4 flex flex-wrap gap-2">
+                            <span
+                                v-for="tech in position.technologies"
+                                :key="tech.id"
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent text-accent-foreground"
+                            >
+                                {{ tech.name }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Job Description -->
+                    <div class="bg-card rounded-lg shadow p-8 border border-border transition-colors duration-300">
+                        <h2 class="text-2xl font-bold text-foreground mb-4">About the Position</h2>
+                        <div class="prose dark:prose-invert max-w-none text-muted-foreground" v-html="position.long_description"></div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Company Info -->
+                    <div class="bg-card rounded-lg shadow p-6 border border-border transition-colors duration-300">
+                        <h3 class="text-lg font-bold text-foreground mb-4">About {{ position.company.name }}</h3>
+
+                        <p v-if="position.company.description" class="text-muted-foreground mb-4">
+                            {{ position.company.description }}
+                        </p>
+
+                        <div
+                            v-if="position.company.website || position.company.social_links"
+                            class="flex flex-wrap gap-3"
+                        >
+                            <a
+                                v-if="position.company.website"
+                                :href="position.company.website"
+                                target="_blank"
+                                class="text-primary hover:underline flex items-center gap-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                                    />
+                                </svg>
+                                Visit Website
+                            </a>
+
+                            <a
+                                v-if="position.company.social_links?.twitter"
+                                :href="position.company.social_links.twitter"
+                                target="_blank"
+                                class="text-primary hover:underline flex items-center gap-2"
+                                title="Twitter / X"
+                            >
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                                    />
+                                </svg>
+                                Twitter
+                            </a>
+
+                            <a
+                                v-if="position.company.social_links?.linkedin"
+                                :href="position.company.social_links.linkedin"
+                                target="_blank"
+                                class="text-primary hover:underline flex items-center gap-2"
+                                title="LinkedIn"
+                            >
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+                                    />
+                                </svg>
+                                LinkedIn
+                            </a>
+
+                            <a
+                                v-if="position.company.social_links?.github"
+                                :href="position.company.social_links.github"
+                                target="_blank"
+                                class="text-primary hover:underline flex items-center gap-2"
+                                title="GitHub"
+                            >
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                                    />
+                                </svg>
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Share -->
+                    <div class="bg-card rounded-lg shadow p-6 border border-border transition-colors duration-300">
+                        <h3 class="text-lg font-bold text-foreground mb-4">Share this position</h3>
+                        <div class="flex gap-2">
+                            <button
+                                id="copy-link-btn"
+                                @click="copyLink"
+                                class="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm transition-all duration-200"
+                            >
+                                <span id="copy-link-text" class="inline-flex items-center justify-center gap-2">
+                                    <svg id="copy-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                    <svg
+                                        id="check-icon"
+                                        class="w-4 h-4 hidden text-green-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                    <span id="btn-label">Copy Link</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</template>

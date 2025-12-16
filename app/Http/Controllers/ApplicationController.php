@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreApplicationRequest;
 use App\Models\Position;
 use App\Notifications\NewApplicationNotification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
@@ -51,6 +52,7 @@ class ApplicationController extends Controller
 
         $position->load(['company', 'technologies', 'customQuestions']);
 
+        // Return position data for modal (not a full page)
         return Inertia::render('Positions/Apply', [
             'position' => $position,
         ]);
@@ -59,7 +61,7 @@ class ApplicationController extends Controller
     /**
      * Store the application.
      */
-    public function store(StoreApplicationRequest $request, Position $position): RedirectResponse
+    public function store(StoreApplicationRequest $request, Position $position): RedirectResponse|JsonResponse
     {
         $validated = $request->validated();
 
@@ -79,6 +81,16 @@ class ApplicationController extends Controller
             Notification::send($hrUsers, new NewApplicationNotification($application));
         }
 
+        // Return JSON response for AJAX requests, redirect for regular requests
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'message' => 'Your application has been submitted successfully!',
+                'success' => true,
+            ]);
+        }
+
+        // Return to position show page with success message
+        // The modal will be closed by the frontend on success
         return redirect()->route('positions.show', $position->slug)
             ->with('message', 'Your application has been submitted successfully!');
     }

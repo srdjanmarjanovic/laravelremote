@@ -91,9 +91,11 @@ const submit = () => {
         preserveScroll: true,
         onSuccess: () => {
             emit('update:open', false);
-            toast.success('Application submitted successfully!');
-            // Reload the page to update the UI
-            router.reload({ only: ['position'] });
+            toast.success('Your application has been submitted successfully!');
+            // Navigate back to position show page to update the UI
+            router.visit(positions.show(props.position.slug).url, {
+                preserveScroll: true,
+            });
         },
         onError: () => {
             toast.error('There was an error submitting your application. Please check the form.');
