@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\HtmlSanitizer;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DeveloperProfileUpdateRequest extends FormRequest
@@ -12,6 +13,17 @@ class DeveloperProfileUpdateRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()->isDeveloper();
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Sanitize summary - strip HTML
+        if ($this->has('summary')) {
+            $this->merge(['summary' => HtmlSanitizer::stripHtml($this->input('summary'))]);
+        }
     }
 
     /**

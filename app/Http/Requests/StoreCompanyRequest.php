@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\HtmlSanitizer;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCompanyRequest extends FormRequest
@@ -12,6 +13,21 @@ class StoreCompanyRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()->isHR() || $this->user()->isAdmin();
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Sanitize text fields - strip HTML
+        if ($this->has('name')) {
+            $this->merge(['name' => HtmlSanitizer::stripHtml($this->input('name'))]);
+        }
+
+        if ($this->has('description')) {
+            $this->merge(['description' => HtmlSanitizer::stripHtml($this->input('description'))]);
+        }
     }
 
     /**

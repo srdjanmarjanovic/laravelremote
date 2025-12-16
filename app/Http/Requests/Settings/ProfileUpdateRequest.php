@@ -3,11 +3,30 @@
 namespace App\Http\Requests\Settings;
 
 use App\Models\User;
+use App\Services\HtmlSanitizer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Sanitize name - strip HTML
+        if ($this->has('name')) {
+            $this->merge(['name' => HtmlSanitizer::stripHtml($this->input('name'))]);
+        }
+
+        // Sanitize developer profile summary - strip HTML
+        if ($this->has('developer_profile.summary')) {
+            $developerProfile = $this->input('developer_profile', []);
+            $developerProfile['summary'] = HtmlSanitizer::stripHtml($developerProfile['summary'] ?? '');
+            $this->merge(['developer_profile' => $developerProfile]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\ListingType;
+use App\Services\HtmlSanitizer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,6 +22,25 @@ class StorePositionRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        // Sanitize text fields - strip HTML from plain text fields
+        if ($this->has('title')) {
+            $this->merge(['title' => HtmlSanitizer::stripHtml($this->input('title'))]);
+        }
+
+        if ($this->has('short_description')) {
+            $this->merge(['short_description' => HtmlSanitizer::stripHtml($this->input('short_description'))]);
+        }
+
+        // Sanitize rich text - allow safe HTML tags for position descriptions
+        if ($this->has('long_description')) {
+            $this->merge(['long_description' => HtmlSanitizer::sanitizeRichText($this->input('long_description'))]);
+        }
+
+        if ($this->has('location_restriction')) {
+            $this->merge(['location_restriction' => HtmlSanitizer::stripHtml($this->input('location_restriction'))]);
+        }
+
+        // Sanitize custom questions
         if ($this->has('custom_questions')) {
             $questions = $this->input('custom_questions', []);
             foreach ($questions as $index => $question) {
@@ -29,6 +49,10 @@ class StorePositionRequest extends FormRequest
                     $question['is_required'] ?? false,
                     FILTER_VALIDATE_BOOLEAN
                 );
+                // Strip HTML from question text
+                if (isset($question['question_text'])) {
+                    $questions[$index]['question_text'] = HtmlSanitizer::stripHtml($question['question_text']);
+                }
             }
             $this->merge(['custom_questions' => $questions]);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\HtmlSanitizer;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreApplicationRequest extends FormRequest
@@ -39,6 +40,23 @@ class StoreApplicationRequest extends FormRequest
         }
 
         return true;
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Sanitize custom answers - strip HTML from all answers
+        if ($this->has('custom_answers')) {
+            $answers = $this->input('custom_answers', []);
+            foreach ($answers as $key => $answer) {
+                if (is_string($answer)) {
+                    $answers[$key] = HtmlSanitizer::stripHtml($answer);
+                }
+            }
+            $this->merge(['custom_answers' => $answers]);
+        }
     }
 
     /**
