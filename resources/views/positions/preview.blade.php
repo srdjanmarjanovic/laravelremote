@@ -32,12 +32,12 @@ use App\Enums\ListingType;
 
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Back Button -->
-        <button onclick="history.back()" class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors cursor-pointer">
+        <a href="{{ route('hr.positions.index') }}" class="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
             Back to positions
-        </button>
+        </a>
 
         <!-- Position Header Card -->
         <div class="rounded-lg shadow-lg p-8 mb-6 {{ in_array($position->listing_type, [ListingType::Featured, ListingType::Top]) ? 'border-2 border-primary bg-gradient-to-br from-primary/10 via-primary/5 to-card shadow-lg shadow-primary/30' : 'bg-card border border-border' }} transition-colors duration-300">
