@@ -340,11 +340,6 @@ class PositionController extends Controller
             }
         }
 
-        // Set published_at if status changed to published and not already set
-        if ($validated['status'] === 'published' && ! $position->published_at) {
-            $validated['published_at'] = now();
-        }
-
         // Extract technology IDs and custom questions
         $technologyIds = $validated['technology_ids'] ?? [];
         $customQuestions = $validated['custom_questions'] ?? [];

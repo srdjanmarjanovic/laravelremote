@@ -8,7 +8,7 @@ use App\Enums\ListingType;
 @section('description', $position->short_description)
 
 @section('content')
-<div class="bg-muted min-h-screen transition-colors duration-300" 
+<div class="bg-muted min-h-screen transition-colors duration-300"
      x-data="applicationModal">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Back Button -->
@@ -108,8 +108,8 @@ use App\Enums\ListingType;
                                             <p class="text-xs text-muted-foreground mt-1">You've submitted an application for this position.</p>
                                         </div>
                                     @elseif($position->canReceiveApplications())
-                                        <button 
-                                            @click="applicationModalOpen = true" 
+                                        <button
+                                            @click="applicationModalOpen = true"
                                             class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors">
                                             Apply Now
                                             <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,8 +181,7 @@ use App\Enums\ListingType;
             <div class="lg:col-span-2 space-y-6">
                 <!-- Job Description -->
                 <div class="bg-card rounded-lg shadow p-8 border border-border transition-colors duration-300">
-                    <h2 class="text-2xl font-bold text-foreground mb-4">About the Position</h2>
-                    <div class="prose dark:prose-invert max-w-none text-muted-foreground">
+                    <div class="prose dark:prose-invert prose-li:leading-7 prose-p:m-2 max-w-none text-muted-foreground">
                         {!! $position->long_description !!}
                     </div>
                 </div>
@@ -292,7 +291,7 @@ use App\Enums\ListingType;
     @auth
         @if($user && $user->isDeveloper() && !$hasApplied && $position->canReceiveApplications())
             <!-- Modal Overlay -->
-            <div x-show="applicationModalOpen" 
+            <div x-show="applicationModalOpen"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100"
@@ -302,7 +301,7 @@ use App\Enums\ListingType;
                  @click.self="closeModal()"
                  class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
                  style="display: none;">
-                
+
                 <!-- Modal Content -->
                 <div x-show="applicationModalOpen"
                      x-transition:enter="ease-out duration-300"
@@ -313,7 +312,7 @@ use App\Enums\ListingType;
                      x-transition:leave-end="opacity-0 scale-95"
                      @click.self.stop
                      class="bg-card rounded-lg shadow-lg border border-border w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                    
+
                     <!-- Modal Header -->
                     <div class="p-6 border-b border-border">
                         <div class="flex items-center justify-between">
@@ -323,7 +322,7 @@ use App\Enums\ListingType;
                                     Review your profile information and answer any additional questions before submitting your application.
                                 </p>
                             </div>
-                            <button @click="closeModal()" 
+                            <button @click="closeModal()"
                                     :disabled="processing"
                                     class="text-muted-foreground hover:text-foreground transition-colors">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,7 +341,7 @@ use App\Enums\ListingType;
                                     <h3 class="text-lg font-semibold text-foreground">Your Profile</h3>
                                     <p class="text-sm text-muted-foreground">This information will be shared with the employer</p>
                                 </div>
-                                <a href="{{ route('developer.profile.edit') }}" target="_blank" 
+                                <a href="{{ route('developer.profile.edit') }}" target="_blank"
                                    class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -398,7 +397,7 @@ use App\Enums\ListingType;
                                                 </svg>
                                                 Available
                                             </span>
-                                            <a href="{{ route('developer.profile.cv.download') }}" 
+                                            <a href="{{ route('developer.profile.cv.download') }}"
                                                target="_blank"
                                                class="ml-auto inline-flex items-center px-3 py-1 text-sm text-primary hover:underline">
                                                 Review CV
@@ -415,7 +414,7 @@ use App\Enums\ListingType;
                                             <p class="text-sm font-medium text-muted-foreground mb-2">Links</p>
                                             <div class="flex flex-wrap gap-2">
                                                 @if($user->developerProfile->github_url)
-                                                    <a href="{{ $user->developerProfile->github_url }}" target="_blank" 
+                                                    <a href="{{ $user->developerProfile->github_url }}" target="_blank"
                                                        class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -424,7 +423,7 @@ use App\Enums\ListingType;
                                                     </a>
                                                 @endif
                                                 @if($user->developerProfile->linkedin_url)
-                                                    <a href="{{ $user->developerProfile->linkedin_url }}" target="_blank" 
+                                                    <a href="{{ $user->developerProfile->linkedin_url }}" target="_blank"
                                                        class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -433,7 +432,7 @@ use App\Enums\ListingType;
                                                     </a>
                                                 @endif
                                                 @if($user->developerProfile->portfolio_url)
-                                                    <a href="{{ $user->developerProfile->portfolio_url }}" target="_blank" 
+                                                    <a href="{{ $user->developerProfile->portfolio_url }}" target="_blank"
                                                        class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
                                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -464,7 +463,7 @@ use App\Enums\ListingType;
                                                     <span class="text-red-500">*</span>
                                                 @endif
                                             </label>
-                                            <textarea 
+                                            <textarea
                                                 id="question-{{ $question->id }}"
                                                 x-model="customAnswers[{{ $question->id }}]"
                                                 :disabled="processing"
@@ -495,12 +494,12 @@ use App\Enums\ListingType;
 
                     <!-- Modal Footer -->
                     <div class="p-6 border-t border-border flex items-center justify-end gap-3">
-                        <button @click="closeModal()" 
+                        <button @click="closeModal()"
                                 :disabled="processing"
                                 class="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-muted text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             Cancel
                         </button>
-                        <button @click="submitApplication()" 
+                        <button @click="submitApplication()"
                                 :disabled="processing"
                                 class="px-4 py-2 text-sm font-medium rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             <span x-show="!processing">Submit Application</span>
@@ -513,7 +512,7 @@ use App\Enums\ListingType;
     @endauth
 
     <!-- Toast Notification -->
-    <div id="toast" 
+    <div id="toast"
          class="fixed top-4 right-4 z-50 hidden transform transition-all duration-300"
          x-cloak>
         <div id="toast-type" class="rounded-lg shadow-lg p-4 min-w-[300px] max-w-md">
@@ -565,17 +564,17 @@ use App\Enums\ListingType;
                 processing: false,
                 errors: {},
                 customAnswers: @json($position->customQuestions->mapWithKeys(fn($q) => [$q->id => ''])->toArray()),
-                
+
                 showToast(message, type = 'success') {
                     const toast = document.getElementById('toast');
                     const toastMessage = document.getElementById('toast-message');
                     const toastType = document.getElementById('toast-type');
                     const toastIconSuccess = document.getElementById('toast-icon-success');
                     const toastIconError = document.getElementById('toast-icon-error');
-                    
+
                     toastMessage.textContent = message;
                     toastType.className = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-                    
+
                     if (type === 'success') {
                         toastIconSuccess.classList.remove('hidden');
                         toastIconError.classList.add('hidden');
@@ -583,10 +582,10 @@ use App\Enums\ListingType;
                         toastIconSuccess.classList.add('hidden');
                         toastIconError.classList.remove('hidden');
                     }
-                    
+
                     toast.classList.remove('hidden');
                     toast.classList.add('animate-slide-in');
-                    
+
                     setTimeout(() => {
                         toast.classList.remove('animate-slide-in');
                         toast.classList.add('animate-slide-out');
@@ -596,16 +595,16 @@ use App\Enums\ListingType;
                         }, 300);
                     }, 4000);
                 },
-                
+
                 async submitApplication() {
                     this.processing = true;
                     this.errors = {};
-                    
+
                     const formData = {
                         custom_answers: this.customAnswers,
                         _token: document.querySelector('meta[name="csrf-token"]').content
                     };
-                    
+
                     try {
                         const response = await fetch('{{ route('positions.apply.store', $position) }}', {
                             method: 'POST',
@@ -617,9 +616,9 @@ use App\Enums\ListingType;
                             },
                             body: JSON.stringify(formData)
                         });
-                        
+
                         const contentType = response.headers.get('content-type');
-                        
+
                         if (!contentType || !contentType.includes('application/json')) {
                             if (response.ok) {
                                 this.showToast('Your application has been submitted successfully!', 'success');
@@ -632,9 +631,9 @@ use App\Enums\ListingType;
                                 throw new Error('Server returned non-JSON response');
                             }
                         }
-                        
+
                         const data = await response.json();
-                        
+
                         if (response.ok && data.success) {
                             this.showToast(data.message || 'Your application has been submitted successfully!', 'success');
                             this.applicationModalOpen = false;
@@ -664,7 +663,7 @@ use App\Enums\ListingType;
                         this.processing = false;
                     }
                 },
-                
+
                 closeModal() {
                     if (!this.processing) {
                         this.applicationModalOpen = false;

@@ -3,11 +3,13 @@ import { watch, onBeforeUnmount } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/components/ui/button';
 import {
     Bold,
     Italic,
+    Underline as UnderlineIcon,
     List,
     ListOrdered,
     Heading2,
@@ -29,6 +31,7 @@ const editor = useEditor({
     content: props.modelValue,
     extensions: [
         StarterKit,
+        Underline,
         Link.configure({
             openOnClick: false,
             autolink: true,
@@ -51,7 +54,7 @@ const editor = useEditor({
                         return false;
                     }
 
-                    const allowedProtocols = ctx.protocols.map(p =>
+                    const allowedProtocols = ctx.protocols.map((p) =>
                         typeof p === 'string' ? p : p.scheme,
                     );
 
@@ -59,7 +62,10 @@ const editor = useEditor({
                         return false;
                     }
 
-                    const disallowedDomains = ['example-phishing.com', 'malicious-site.net'];
+                    const disallowedDomains = [
+                        'example-phishing.com',
+                        'malicious-site.net',
+                    ];
                     const domain = parsedUrl.hostname;
 
                     if (disallowedDomains.includes(domain)) {
@@ -71,7 +77,7 @@ const editor = useEditor({
                     return false;
                 }
             },
-            shouldAutoLink: url => {
+            shouldAutoLink: (url) => {
                 try {
                     const parsedUrl = url.includes(':')
                         ? new URL(url)
@@ -98,7 +104,7 @@ const editor = useEditor({
     ],
     editorProps: {
         attributes: {
-            class: 'prose dark:prose-invert prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none max-w-none min-h-[200px] p-4',
+            class: 'prose dark:prose-invert prose-li:leading-7 prose-p:m-2 focus:outline-none max-w-none min-h-[200px] p-4',
         },
         handleDOMEvents: {
             click: (view, event) => {
@@ -129,7 +135,7 @@ watch(
             return;
         }
         editor.value?.commands.setContent(value, false);
-    }
+    },
 );
 
 const setLink = () => {
@@ -147,7 +153,12 @@ const setLink = () => {
         return;
     }
 
-    editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    editor.value
+        .chain()
+        .focus()
+        .extendMarkRange('link')
+        .setLink({ href: url })
+        .run();
 };
 
 onBeforeUnmount(() => {
@@ -181,13 +192,26 @@ onBeforeUnmount(() => {
             >
                 <Italic class="h-4 w-4" />
             </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                @click="editor.chain().focus().toggleUnderline().run()"
+                :class="{ 'bg-muted': editor.isActive('underline') }"
+            >
+                <UnderlineIcon class="h-4 w-4" />
+            </Button>
             <div class="mx-1 h-6 w-px bg-border" />
             <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                :class="{ 'bg-muted': editor.isActive('heading', { level: 2 }) }"
+                @click="
+                    editor.chain().focus().toggleHeading({ level: 2 }).run()
+                "
+                :class="{
+                    'bg-muted': editor.isActive('heading', { level: 2 }),
+                }"
             >
                 <Heading2 class="h-4 w-4" />
             </Button>
@@ -257,4 +281,3 @@ onBeforeUnmount(() => {
     height: 0;
 }
 </style>
-

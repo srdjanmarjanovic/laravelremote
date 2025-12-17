@@ -164,8 +164,7 @@ use App\Enums\ListingType;
             <div class="lg:col-span-2 space-y-6">
                 <!-- Job Description -->
                 <div class="bg-card rounded-lg shadow p-8 border border-border transition-colors duration-300">
-                    <h2 class="text-2xl font-bold text-foreground mb-4">About the Position</h2>
-                    <div class="prose dark:prose-invert max-w-none text-muted-foreground">
+                    <div class="prose dark:prose-invert prose-li:leading-7 prose-p:m-2 max-w-none text-muted-foreground">
                         {!! $position->long_description !!}
                     </div>
                 </div>
