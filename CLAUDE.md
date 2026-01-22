@@ -1,3 +1,109 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Remote Laravel Job Board - A job board platform for remote Laravel positions. Built with Laravel 12, Inertia.js v2, Vue 3, and Tailwind CSS v4.
+
+## Development Commands
+
+```bash
+# Start development server (runs Laravel server, queue, logs, and Vite concurrently)
+composer run dev
+
+# Build frontend assets
+npm run build
+
+# Run all tests
+php artisan test
+
+# Run specific test file
+php artisan test tests/Feature/PositionTest.php
+
+# Run tests matching a filter
+php artisan test --filter=testName
+
+# Format PHP code (run before committing)
+vendor/bin/pint --dirty
+
+# Lint and fix JavaScript/Vue
+npm run lint
+
+# Format JavaScript/Vue
+npm run format
+```
+
+## Architecture
+
+### Multi-Role System
+Three user roles with distinct dashboards and permissions:
+- **Admin** (`/admin/*`): Platform oversight, user/company/position management, technology tags
+- **HR** (`/hr/*`): Company management, job posting, application review
+- **Developer** (`/developer/*`): Profile management, job applications
+
+### Key Models & Relationships
+- `User` - has role (admin/hr/developer), belongs to companies (HR), has developer profile
+- `Company` - has many positions, has many users (team members with roles: owner/admin/member)
+- `Position` - belongs to company, has technologies (many-to-many), has custom questions, has applications
+- `Application` - belongs to position and user, stores cover letter and custom question answers
+- `DeveloperProfile` - belongs to user, stores CV, portfolio, social links
+
+### Services
+- `app/Services/Payment/` - Payment provider abstraction with `PaymentProviderInterface` and `LemonSqueezyProvider`
+- `app/Services/HtmlSanitizer.php` - XSS protection for rich text content
+- `app/Services/DeviceDetector.php` - Device detection for analytics
+
+### Authorization
+Policies in `app/Policies/` control access:
+- `PositionPolicy` - position CRUD based on company membership
+- `ApplicationPolicy` - application access based on ownership or company HR
+- `CompanyPolicy` - company management based on team roles
+
+### Frontend Structure
+- `resources/js/pages/` - Inertia page components organized by role (Admin/, Hr/, Developer/, settings/, auth/)
+- `resources/js/components/ui/` - shadcn/ui component library (Button, Card, Dialog, etc.)
+- `resources/js/layouts/` - Layout components for authenticated/guest pages
+
+### Route Organization
+Routes in `routes/web.php` are grouped by:
+1. Public routes (positions, companies, legal pages)
+2. Authenticated routes (dashboard redirect, notifications)
+3. Developer routes (`role:developer` middleware)
+4. HR routes (`role:hr` middleware, `company.complete` for position management)
+5. Admin routes (`role:admin` middleware)
+
+### Middleware
+- `role:{role}` - Role-based access control (`EnsureUserHasRole`)
+- `profile.complete` - Requires complete developer profile for applications
+- `company.complete` - Requires complete company profile for position management
+
+## Testing
+
+Tests use Pest v4. Feature tests in `tests/Feature/`, unit tests in `tests/Unit/`.
+
+```php
+// Example Pest test structure
+it('creates a position', function () {
+    $user = User::factory()->hr()->create();
+    // ...
+    $response->assertSuccessful();
+});
+```
+
+## Code Style
+
+- PHP: Laravel Pint (PSR-12 based)
+- Vue/TypeScript: ESLint + Prettier
+- Tailwind CSS v4: Use `@theme` directive for customization, avoid deprecated utilities
+
+## Important Conventions
+
+- Use Form Request classes for validation (check `app/Http/Requests/`)
+- Use Wayfinder for type-safe route generation in Vue components
+- Dark mode support required for new UI components
+- Use `gap-*` utilities instead of margins for spacing in flex/grid layouts
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
