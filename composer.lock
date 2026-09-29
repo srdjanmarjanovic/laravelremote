@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0fd13d5efccdc3a91b8bc8e7ce8b1de1",
+    "content-hash": "eb25d1dace397324d4b355cd26392374",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2520,6 +2520,126 @@
                 }
             ],
             "time": "2024-12-08T08:18:47+00:00"
+        },
+        {
+            "name": "mailgazelle/laravel-sdk",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mailgazelle/laravel-sdk.git",
+                "reference": "55c298f9559639e56e2b1344903d4b4ee7758114"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mailgazelle/laravel-sdk/zipball/55c298f9559639e56e2b1344903d4b4ee7758114",
+                "reference": "55c298f9559639e56e2b1344903d4b4ee7758114",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "illuminate/support": "^11.0|^12.0|^13.0",
+                "mailgazelle/php-sdk": "^1.1",
+                "php": "^8.2",
+                "symfony/mailer": "^7.0|^8.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.21",
+                "orchestra/testbench": "^9.18|^10.12|^11.3",
+                "phpunit/phpunit": "^11.5.50"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "MailGazelle": "MailGazelle\\Laravel\\Facades\\MailGazelle"
+                    },
+                    "providers": [
+                        "MailGazelle\\Laravel\\MailGazelleServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "MailGazelle\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Srdjan Marjanovic",
+                    "email": "srdjan@foobar.rs"
+                }
+            ],
+            "description": "Mail Gazelle mail transport for Laravel.",
+            "homepage": "https://mailgazelle.com",
+            "keywords": [
+                "email",
+                "laravel",
+                "mail",
+                "mailgazelle",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/mailgazelle/laravel-sdk/issues",
+                "source": "https://github.com/mailgazelle/laravel-sdk/tree/v1.0.0"
+            },
+            "time": "2026-09-28T17:50:09+00:00"
+        },
+        {
+            "name": "mailgazelle/php-sdk",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mailgazelle/php-sdk.git",
+                "reference": "91df85509c2a4a9e73d50e29991c5fd0841cbf46"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mailgazelle/php-sdk/zipball/91df85509c2a4a9e73d50e29991c5fd0841cbf46",
+                "reference": "91df85509c2a4a9e73d50e29991c5fd0841cbf46",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^11.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MailGazelle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Srdjan Marjanovic",
+                    "email": "srdjan@foobar.rs"
+                }
+            ],
+            "description": "PHP SDK for sending transactional email through Mail Gazelle.",
+            "keywords": [
+                "email",
+                "mailgazelle",
+                "sdk",
+                "transactional"
+            ],
+            "support": {
+                "issues": "https://github.com/mailgazelle/php-sdk/issues",
+                "source": "https://github.com/mailgazelle/php-sdk/tree/v1.1.0"
+            },
+            "time": "2026-09-28T09:36:42+00:00"
         },
         {
             "name": "matomo/device-detector",
@@ -10511,5 +10631,5 @@
         "php": "^8.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

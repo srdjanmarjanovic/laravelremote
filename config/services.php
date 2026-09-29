@@ -53,4 +53,8 @@ return [
         'redirect' => env('LINKEDIN_REDIRECT_URL', '/auth/linkedin/callback'),
     ],
 
+    'mailgazelle' => [
+        'token' => env('MAILGAZELLE_API_TOKEN'),
+    ],
+
 ];

@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => env('MAIL_MAILER', 'mailgazelle'),
 
     /*
     |--------------------------------------------------------------------------
@@ -30,7 +30,7 @@ return [
     | your mailers below. You may also add additional mailers if needed.
     |
     | Supported: "smtp", "sendmail", "mailgun", "ses", "ses-v2",
-    |            "postmark", "resend", "log", "array",
+    |            "postmark", "resend", "mailgazelle", "log", "array",
     |            "failover", "roundrobin"
     |
     */
@@ -63,6 +63,10 @@ return [
 
         'resend' => [
             'transport' => 'resend',
+        ],
+
+        'mailgazelle' => [
+            'transport' => 'mailgazelle',
         ],
 
         'sendmail' => [
